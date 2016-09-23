@@ -9,4 +9,3 @@ for i in range(length):
     if i != length-1:
         out.write(',')
 out.close()
-
