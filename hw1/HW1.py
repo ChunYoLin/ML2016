@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import re
+import math
 from datetime import datetime, date
 #  hash_table for key
 hash_table = {
@@ -26,24 +27,32 @@ for idx,row in enumerate(raw_file):
                 data_float.append(0)
         train_data[hash_table[data[2]]]+=data_float
 
-#  prepare x
+#  prepare x and y
 train_data_arr = np.asarray(train_data, dtype=np.float32)
-x = [[] for i in range(18)]
-for idx, item in enumerate(train_data_arr):
-    for i in range(len(item)-9):
-        x[idx].append(item[i:i+9])
-x = np.asarray(x, dtype=np.float32)
-
-#  prepare y
+x = []
 y = []
-PM2_5 = train_data_arr[hash_table["PM2.5"]]
-for i in range(len(PM2_5)-9):
-    y.append(PM2_5[i+9])
+for i in range(len(train_data_arr[0])-9):
+    x.append(train_data_arr[:,i:i+9])
+    y.append(train_data_arr[hash_table["PM2.5"],i+9])
+x = np.asarray(x, dtype=np.float32)
 y = np.asarray(y, dtype=np.float32)
+x = x.reshape(x.shape[0], x.shape[1]*x.shape[2])
 
-# model declaration
-trainset_size = len(y)
-w = np.random.rand(trainset_size,18,9)
-b = np.random.rand(trainset_size)
+#  model declaration
+w = np.random.rand(x.shape[1])
+b = 0 
 
-
+#  training
+for k in range(100):
+    L = 0
+    w_ = np.zeros(shape = w.shape)
+    b_ = 0
+    for i, data in enumerate(x):
+        wx = np.sum(w * x[i])
+        y_ = b + wx 
+        L += (y[i] - y_)**2
+        for j in range(len(x[i])):
+            w_[j] += 2*(y[i] - x[i,j])*(-x[i,j])
+        b_ += 2*(y[i] - (b + wx))  
+    w -= w_
+    b -= b_
