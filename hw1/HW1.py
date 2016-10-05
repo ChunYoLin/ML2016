@@ -36,23 +36,41 @@ for i in range(len(train_data_arr[0])-9):
     y.append(train_data_arr[hash_table["PM2.5"],i+9])
 x = np.asarray(x, dtype=np.float32)
 y = np.asarray(y, dtype=np.float32)
-x = x.reshape(x.shape[0], x.shape[1]*x.shape[2])
+x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
 
 #  model declaration
 w = np.random.rand(x.shape[1])
-b = 0 
+b = np.random.rand() 
+
+
+#  for adagram
+iterations = 10000
+gw_his = np.zeros(shape = (iterations, x.shape[1]))
+gb_his = np.zeros(shape = (iterations))
 
 #  training
-for k in range(100):
+learning_rate = 0.6
+for k in range(iterations):
     L = 0
-    w_ = np.zeros(shape = w.shape)
-    b_ = 0
+    gw = np.zeros(shape = w.shape)
+    gb = 0
     for i, data in enumerate(x):
-        wx = np.sum(w * x[i])
+        wx = np.dot(w.transpose(), x[i])
         y_ = b + wx 
         L += (y[i] - y_)**2
         for j in range(len(x[i])):
-            w_[j] += 2*(y[i] - x[i,j])*(-x[i,j])
-        b_ += 2*(y[i] - (b + wx))  
-    w -= w_
-    b -= b_
+            gw[j] += 2 * (y[i] - y_) * (-x[i,j])
+        gb += 2*(y[i] - y_) 
+    #  print (np.sum(gw_his, axis = 0)**0.5) 
+    gw_his[k] = gw**2
+    gb_his[k] = gb**2
+    w -= (learning_rate/np.sum(gw_his, axis = 0)**0.5) * gw
+    b -= (learning_rate/np.sum(gb_his, axis = 0)**0.5) * gb 
+    print L,y[i],y_
+    if L == 0:
+        break
+np.savetxt('./weights', w)
+out = open('./weights', 'a')
+out.write('######\n')
+out.write(str(b))
+out.close()
