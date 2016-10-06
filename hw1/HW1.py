@@ -38,6 +38,7 @@ x = np.asarray(x, dtype=np.float32)
 y = np.asarray(y, dtype=np.float32)
 x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
 
+print x.shape
 #  model declaration
 w = np.random.rand(x.shape[1])
 b = np.random.rand() 
@@ -49,26 +50,43 @@ gw_his = np.zeros(shape = (iterations, x.shape[1]))
 gb_his = np.zeros(shape = (iterations))
 
 #  training
-learning_rate = 0.6
+learning_rate = 0.5
+train_size = 2000
 for k in range(iterations):
     L = 0
     gw = np.zeros(shape = w.shape)
     gb = 0
-    for i, data in enumerate(x):
+    for i, data in enumerate(x[:train_size]):
         wx = np.dot(w.transpose(), x[i])
-        y_ = b + wx 
-        L += (y[i] - y_)**2
+        y_ = b + wx
+        L += (1 / (2. * x.shape[0])) * (y[i] - y_)**2
         for j in range(len(x[i])):
-            gw[j] += 2 * (y[i] - y_) * (-x[i,j])
-        gb += 2*(y[i] - y_) 
-    #  print (np.sum(gw_his, axis = 0)**0.5) 
+            gw[j] += (y[i] - y_) * (-x[i,j]) / x.shape[0]
+        gb += (y[i] - y_) / x.shape[0]
     gw_his[k] = gw**2
     gb_his[k] = gb**2
     w -= (learning_rate/np.sum(gw_his, axis = 0)**0.5) * gw
     b -= (learning_rate/np.sum(gb_his, axis = 0)**0.5) * gb 
-    print L,y[i],y_
-    if L == 0:
-        break
+    print L
+
+#  inference
+e_train = 0
+e_test = 0
+y_ = np.zeros(shape = y.shape)
+for i ,data in enumerate(x[:train_size]):
+    wx = np.dot(w.transpose(), x[i])
+    y_[i] = b + wx
+    e_train += np.abs(y[i] - y_[i])
+    
+for i, data in enumerate(x[train_size:]):
+    wx = np.dot(w.transpose(), x[i])
+    y_[i] = b + wx
+    e_test += np.abs(y[i] - y_[i])
+print e_train,e_test 
+
+x_ = []
+y_ = []
+
 np.savetxt('./weights', w)
 out = open('./weights', 'a')
 out.write('######\n')
