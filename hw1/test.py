@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 import numpy as np
 import re
 import math
@@ -22,8 +22,11 @@ for idx, row in enumerate(test_data):
             x[int(data[0][3:]), hash_table[data[1]], idx] = v
         else:
             x[int(data[0][3:]), hash_table[data[1]], idx] = 0 
-x = x.reshape(x.shape[0], x.shape[1]*x.shape[2])
+
+#  x = x.reshape(x.shape[0], x.shape[1]*x.shape[2])
+x_ = x[:,hash_table["PM2.5"]] 
 y = np.zeros(shape = x.shape[0])
+
 #  model declartion
 w = np.random.rand(x.shape[1])
 b = np.random.rand()
@@ -44,3 +47,4 @@ out = open('./pred.csv','w')
 out.write("id,value\n")
 for i in range(y.shape[0]):
     out.write('id_' + str(i) + ',' + str(y[i]) + '\n')    
+out.close()

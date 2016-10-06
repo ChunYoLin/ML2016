@@ -32,11 +32,11 @@ train_data_arr = np.asarray(train_data, dtype=np.float32)
 x = []
 y = []
 for i in range(len(train_data_arr[0])-9):
-    x.append(train_data_arr[:,i:i+9])
+    x.append(train_data_arr[hash_table["PM2.5"],i:i+9])
     y.append(train_data_arr[hash_table["PM2.5"],i+9])
 x = np.asarray(x, dtype=np.float32)
 y = np.asarray(y, dtype=np.float32)
-x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
+#  x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
 
 #  model declaration
 w = np.random.rand(x.shape[1])
@@ -44,13 +44,13 @@ b = np.random.rand()
 
 
 #  for adagram
-iterations = 10000
+iterations = 30000
 gw_his = np.zeros(shape = (iterations, x.shape[1]))
 gb_his = np.zeros(shape = (iterations))
 
 #  training
-learning_rate = 0.5
-train_size = 500
+learning_rate = 0.01 
+train_size = x.shape[0] 
 for k in range(iterations):
     L = 0
     gw = np.zeros(shape = w.shape)
@@ -60,13 +60,14 @@ for k in range(iterations):
         y_ = b + wx
         L += (1 / (2. * x.shape[0])) * (y[i] - y_)**2
         for j in range(len(x[i])):
-            gw[j] += (y[i] - y_) * (-x[i,j]) / x.shape[0]
-        gb += (y[i] - y_) / x.shape[0]
-    gw_his[k] = gw**2
-    gb_his[k] = gb**2
-    w -= (learning_rate/np.sum(gw_his, axis = 0)**0.5) * gw
-    b -= (learning_rate/np.sum(gb_his, axis = 0)**0.5) * gb 
-    print k,L
+            gw[j] += (y[i] - y_) * (-x[i,j])
+        gb += (y[i] - y_)
+    gw_his[k] = (gw/x.shape[0])**2
+    gb_his[k] = (gb/x.shape[0])**2
+    w -= (learning_rate/np.sum(gw_his, axis = 0)**0.5) * gw/x.shape[0]
+    b -= (learning_rate/np.sum(gb_his, axis = 0)**0.5) * gb/x.shape[0]
+    print "iter"+str(k),"L:",L, gw/x.shape[0]
+    
 
 #  inference
 e_train = 0
@@ -81,11 +82,9 @@ for i, data in enumerate(x[train_size:]):
     wx = np.dot(w.transpose(), x[i])
     y_[i] = b + wx
     e_test += np.abs(y[i] - y_[i])
-print e_train,e_test 
+print "e_train = ", e_train / train_size, "e_test = ", e_test / (x.shape[0] - train_size)
 
-x_ = []
-y_ = []
-
+print "write weights to file...."
 out = open('./weights', 'w')
 out.write(str(len(w)))
 out.write(' ')
