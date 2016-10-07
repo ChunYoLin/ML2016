@@ -12,6 +12,7 @@ hash_table = {
     }
 inv_hash_table = {v: k for k, v in hash_table.items()}
 
+
 #  prepare data
 train_data = [[] for i in range(18)]
 raw_file = open('./data/train.csv')

@@ -12,6 +12,8 @@ hash_table = {
     }
 inv_hash_table = {v: k for k, v in hash_table.items()}
 
+feature = [hash_table["PM2.5"], hash_table["PM10"], hash_table["SO2"]]
+
 #  parse data
 x = np.zeros(shape = (240,18,9))
 test_data = open('./data/test_X.csv', 'r')
@@ -24,7 +26,8 @@ for idx, row in enumerate(test_data):
             x[int(data[0][3:]), hash_table[data[1]], idx] = 0 
 
 #  x = x.reshape(x.shape[0], x.shape[1]*x.shape[2])
-x_ = x[:,hash_table["PM2.5"]] 
+x_ = x[:,feature]
+x_ = x_.reshape(x_.shape[0], 9 * len(feature))
 y = np.zeros(shape = x.shape[0])
 
 #  model declartion
@@ -32,7 +35,7 @@ w = np.random.rand(x.shape[1])
 b = np.random.rand()
 
 #  load weights from weights file
-wf = open('./weights', 'r')
+wf = open('./weights/weights_3_feature_final', 'r')
 wlist = wf.read().split(' ')
 w = np.asarray(wlist[1:int(wlist[0])+1], dtype = np.float32)
 b = float(wlist[int(wlist[0])+1])
@@ -43,7 +46,7 @@ for i, data in enumerate(x):
     y[i] = wx + b
 
 #  output
-out = open('./pred.csv','w')
+out = open('./pred_3_feature.csv','w')
 out.write("id,value\n")
 for i in range(y.shape[0]):
     out.write('id_' + str(i) + ',' + str(y[i]) + '\n')    
