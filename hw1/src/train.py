@@ -70,26 +70,32 @@ gb_his = np.zeros(shape = (iterations))
 
 #  training
 learning_rate = 0.02 
-train_size = x.shape[0] 
+data_set_size = x.shape[0]
+train_set_size = 4000
+train_set = x[:train_set_size]
+validate_set = x[train_set_size:]
+
 for k in range(iterations):
     L = 0
     gw = np.zeros(shape = w.shape)
     gb = 0
-    for i, data in enumerate(x[:train_size]):
-        wx = np.dot(w.transpose(), x[i])
+    for i, data in enumerate(train_set):
+        wx = np.dot(w.transpose(), data)
         y_ = b + wx
-        L += (1 / (2. * x.shape[0])) * (y[i] - y_)**2
-        for j in range(len(x[i])):
-            gw[j] += (y[i] - y_) * (-x[i,j])
-        gb += (y[i] - y_)
-    gw_his[k] = (gw/x.shape[0])**2
-    gb_his[k] = (gb/x.shape[0])**2
-    w -= (learning_rate/np.sum(gw_his, axis = 0)**0.5) * gw/x.shape[0]
-    b -= (learning_rate/np.sum(gb_his, axis = 0)**0.5) * gb/x.shape[0]
-    print "iter"+str(k),"L:",L, gw/x.shape[0]
+        L += (1 / (2. * train_set_size)) * (y[i] - y_)**2
+        for j in range(len(data)):
+            gw[j] += (y[i] - y_) * (-data[j]) / train_set_size
+        gb += (y[i] - y_) / train_set_size
+    gw_his[k] = (gw)**2
+    gb_his[k] = (gb)**2
+    w -= (learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw
+    b -= (learning_rate / np.sum(gb_his, axis = 0)**0.5) * gb 
+    #  print out the current Loss and gradient of weights and bias
+    print "iter"+str(k),"L:", L, gw, gb
+    #  if iter 5000 times write the current weights and bias to file
     if (k + 1) % 5000 == 0 and k != 0:
-        out = open('weights/'+sys.argv[1]+'.weights' + str(k), 'w')
-        out.write(str(k + time) + ' ')
+        out = open('weights/' + sys.argv[1] + '.weights' + str(k + time), 'w')
+        out.write(str(k) + ' ')
         out.write(str(len(w)) + ' ')
         for i in range(len(w)):
             out.write(str(w[i]))
@@ -101,7 +107,7 @@ for k in range(iterations):
 e_train = 0
 e_test = 0
 y_ = np.zeros(shape = y.shape)
-for i ,data in enumerate(x[:train_size]):
+for i ,data in enumerate(x[:train_set_size]):
     wx = np.dot(w.transpose(), x[i])
     y_[i] = b + wx
     e_train += np.abs(y[i] - y_[i])
@@ -110,4 +116,4 @@ for i, data in enumerate(x[train_size:]):
     wx = np.dot(w.transpose(), x[i])
     y_[i] = b + wx
     e_test += np.abs(y[i] - y_[i])
-print "e_train = ", e_train / train_size, "e_test = ", e_test / (x.shape[0] - train_size + 1)
+print "e_train = ", e_train / train_size, "e_test = ", e_test / (x.shape[0] - train_size)
