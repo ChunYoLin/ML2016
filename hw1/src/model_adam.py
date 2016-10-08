@@ -48,10 +48,8 @@ for i in range(len(train_data_arr[0]) - 9):
 x = np.asarray(x, dtype = np.float32)
 y = np.asarray(y, dtype = np.float32)
 x = x.reshape(x.shape[0], 9 * len(feature))
-
-#  featrue scaling
-#  x_mean = np.mean(x, axis = 0)
-#  x_std = np.std(x, axis = 0)
+x_mean = np.mean(x, axis = 0)
+x_std = np.std(x, axis = 0)
 
 #  model declaration
 time = 0
@@ -75,14 +73,19 @@ validate_set = x[train_set_size:]
 
 #  train the model
 if sys.argv[1] == "tr":
-    #  for adagram
+    #  for adam
     iterations = 50000
-    gw_his = np.zeros(shape = (iterations, x.shape[1]))
-    gb_his = np.zeros(shape = (iterations))
-
+    t = 0
+    Beta1 = 0.9
+    Beta2 = 0.999
+    e = 10**(-8)
+    m = np.zeros(shape = w.shape)
+    v = np.zeros(shape = w.shape)
+    mb = 0. 
+    vb = 0. 
     #  training
     learning_rate = float(sys.argv[4])
-    LAMBDA = 100
+    LAMBDA = 10
     for k in range(iterations):
         L = 0
         gw = np.zeros(shape = w.shape)
@@ -91,15 +94,23 @@ if sys.argv[1] == "tr":
             wx = np.dot(w.transpose(), data)
             y_ = b + wx
             L += (1 / (2. * train_set_size)) * (y[i] - y_)**2 
+            t += 1
             for j in range(len(data)):
-                gw[j] += ((y[i] - y_) * (-data[j])) / train_set_size
+                gw[j] += ((y[i] - y_) * (-data[j]) + LAMBDA * w[j]) / train_set_size
             gb += (y[i] - y_) / train_set_size
-        gw_his[k] = (gw)**2
-        gb_his[k] = (gb)**2
-        w -= (learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw
-        b -= (learning_rate / np.sum(gb_his, axis = 0)**0.5) * gb 
+            m = Beta1 * m + (1 - Beta1) * gw
+            v = Beta2 * v + (1 - Beta2) * (gw**2)
+            m_ = m / (1 - Beta1**t)
+            v_ = v / (1 - Beta2**t)
+            mb = Beta1 * mb + (1 - Beta1) * gb
+            vb = Beta2 * vb + (1 - Beta2) * (gb**2)
+            mb_ = mb / (1 - Beta1**t)
+            vb_ = vb / (1 - Beta2**t)
+        L += LAMBDA * np.sum(w**2) / 2
+        w -= learning_rate * m_ / (v_**(0.5) + e) * gw
+        b -= learning_rate * mb_ / (vb_**(0.5) + e) * gb
         #  print out the current Loss and gradient of weights and bias
-        print "iter"+ str(k), "L:", L, gw, gb
+        print "iter"+str(k),"L:", L, gw, gb
         #  if iter 5000 times write the current weights and bias to file
         if (k + 1) % 5000 == 0 and k != 0:
             out = open('weights/' + str(len(feature)) + '_' + str((k + 1) + time) + '.weights', 'w')

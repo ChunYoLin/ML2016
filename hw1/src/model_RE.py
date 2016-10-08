@@ -48,10 +48,8 @@ for i in range(len(train_data_arr[0]) - 9):
 x = np.asarray(x, dtype = np.float32)
 y = np.asarray(y, dtype = np.float32)
 x = x.reshape(x.shape[0], 9 * len(feature))
-
-#  featrue scaling
-#  x_mean = np.mean(x, axis = 0)
-#  x_std = np.std(x, axis = 0)
+x_mean = np.mean(x, axis = 0)
+x_std = np.std(x, axis = 0)
 
 #  model declaration
 time = 0
@@ -92,10 +90,22 @@ if sys.argv[1] == "tr":
             y_ = b + wx
             L += (1 / (2. * train_set_size)) * (y[i] - y_)**2 
             for j in range(len(data)):
-                gw[j] += ((y[i] - y_) * (-data[j])) / train_set_size
+                gw[j] += ((y[i] - y_) * (-data[j]) + LAMBDA * w[j]) / train_set_size
             gb += (y[i] - y_) / train_set_size
         gw_his[k] = (gw)**2
         gb_his[k] = (gb)**2
+        #  exit when gw and gb extremely small
+        if np.sum(np.abs(gw)) + gb < 0.0001:
+            #  write the final model to file
+            out = open('weights/' + str(len(feature)) + '_' + 'final' + '.weights', 'w')
+            out.write(str(k) + ' ')
+            out.write(str(len(w)) + ' ')
+            for i in range(len(w)):
+                out.write(str(w[i]))
+                out.write(' ')
+            out.write(str(b))
+            out.close()
+        L += LAMBDA * np.sum(w**2) / 2
         w -= (learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw
         b -= (learning_rate / np.sum(gb_his, axis = 0)**0.5) * gb 
         #  print out the current Loss and gradient of weights and bias
@@ -124,5 +134,4 @@ elif sys.argv[1] == "vd":
         wx = np.dot(w.transpose(), data)
         y_[i] = b + wx
         e_test += np.abs(y[i] - y_[i])
-        #  print "Truth: " + str(y[i]) + " Pred: " + str(y_[i])
     print "e_train = ", e_train / train_set_size, "e_test = ", e_test / (data_set_size - train_set_size)
