@@ -1,0 +1,9 @@
+{
+  "feature": [
+    "PM2.5"
+  ],
+  "Regularization": 0,
+  "Scaling": false,
+  "Learning Rate": 0.05,
+  "Optimizer": "Adagrad"
+}

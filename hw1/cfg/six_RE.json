@@ -1,0 +1,14 @@
+{
+  "feature": [
+    "PM2.5",
+    "PM10",
+    "SO2",
+	"O3",
+	"RAINFALL",
+	"WIND_SPEED"
+  ],
+  "Regularization": 1000,
+  "Scaling": false,
+  "Learning Rate": 0.05,
+  "Optimizer": "Adagrad"
+}

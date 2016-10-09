@@ -3,6 +3,7 @@ import numpy as np
 import re
 import math
 import sys
+import json
 
 #  hash_table for key
 hash_table = {
@@ -13,15 +14,16 @@ hash_table = {
     }
 inv_hash_table = {v: k for k, v in hash_table.items()}
 
-#  select feature
+#  parse config file
+f = open(sys.argv[1], 'r')
+cfg_data = json.load(f)
 feature = []
-fea_file = open(sys.argv[1])
-s = fea_file.read().rstrip('\n')
-if s == 'A':
-    feature = [v for k, v in hash_table.items()]
-else:
-    for fea in s.split(','):
-        feature.append(hash_table[fea])
+for item in cfg_data["feature"]:
+    if item == 'A':
+        feature = [v for k, v in hash_table.items()]
+        break
+    else:
+        feature.append(hash_table[item])
 feature.sort()
 
 #  parse data

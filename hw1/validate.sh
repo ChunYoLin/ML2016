@@ -1,6 +1,9 @@
-FILES="weights/$2_*"
+FILES="weights/*"
 for f in $FILES
 do
-	echo "validate model $f"
-	python src/model.py vd $1 $f
+	file=${f#weights/}
+	model=${file%_Adagrad_*}
+	echo ---------------------------------------------------
+	echo "validate model $file"
+	python src/model.py vd 'cfg/'${model}'.json' $f 
 done
