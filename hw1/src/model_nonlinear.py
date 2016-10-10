@@ -45,6 +45,7 @@ Optimizer = cfg_data["Optimizer"]
 model = re.sub('.json', '', os.path.basename(sys.argv[2]))
 
 weights_file_name = model + '_'
+weights_file_name += 'NONLINEAR_'
 if Regularization > 0:
     weights_file_name += 'LAMBDA_' + str(Regularization) + '_'
 if Scaling == True:
@@ -62,6 +63,8 @@ for i in range(len(train_data_arr[0]) - 9):
 x = np.asarray(x, dtype = np.float32)
 y = np.asarray(y, dtype = np.float32)
 x = x.reshape(x.shape[0], 9 * len(feature))
+x_2 = x**2
+x = np.concatenate((x, x_2), axis = 1)
 
 #  featrue scaling
 if Scaling == True:
@@ -148,12 +151,12 @@ if sys.argv[1] == "tr":
         print "feature:", feature
         print "iter"+ str(k), "L:", L
         print "gradient of w,b :", gw, gb
-        print "sum of gradient", gsum 
+        print "mean of gradient", gsum / (len(gw) + 1)  
         print "Learning_rate:", Learning_rate
         print "Regularization:", LAMBDA
         print "Scaling:", Scaling
         print "Optimizer:", Optimizer
-        if gsum < 0.001:
+        if gsum / (len(gw) + 1) < 0.1:
             #  write the weights and bias to file
             out = open('weights/' + weights_file_name + '.weights', 'w')
             out.write(str(k + 1 + time) + ' ')
@@ -165,6 +168,7 @@ if sys.argv[1] == "tr":
             out.write(' ')
             out.write(str(L))
             out.close()
+            break
 #  validate the model
 elif sys.argv[1] == "vd":
     e_train = 0

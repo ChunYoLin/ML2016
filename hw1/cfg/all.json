@@ -4,6 +4,6 @@
   ],
   "Regularization": 0,
   "Scaling": false,
-  "Learning Rate": 1,
+  "Learning Rate": 1.5,
   "Optimizer": "Adagrad"
 }

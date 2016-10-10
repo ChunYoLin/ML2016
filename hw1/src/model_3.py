@@ -45,6 +45,7 @@ Optimizer = cfg_data["Optimizer"]
 model = re.sub('.json', '', os.path.basename(sys.argv[2]))
 
 weights_file_name = model + '_'
+weights_file_name += 'NONLINEAR_3_'
 if Regularization > 0:
     weights_file_name += 'LAMBDA_' + str(Regularization) + '_'
 if Scaling == True:
@@ -62,6 +63,10 @@ for i in range(len(train_data_arr[0]) - 9):
 x = np.asarray(x, dtype = np.float32)
 y = np.asarray(y, dtype = np.float32)
 x = x.reshape(x.shape[0], 9 * len(feature))
+x_2 = x**2
+x_3 = x**3
+x = np.concatenate((x, x_2), axis = 1)
+x = np.concatenate((x, x_3), axis = 1)
 
 #  featrue scaling
 if Scaling == True:
@@ -113,17 +118,16 @@ if sys.argv[1] == "tr":
     LAMBDA = Regularization
     for k in range(iterations):
         L = 0
+        gw = np.zeros(shape = w.shape)
+        gb = 0
         t = t + 1
-        y_ = np.dot(x, w)
-        L = np.sum((y - y_) ** 2) / (2 * train_set_size)
-        gw = np.dot(-x.transpose(), (y - y_)) / train_set_size
-        #  for i, data in enumerate(train_set):
-            #  wx = np.dot(w.transpose(), data)
-            #  y_ = b + wx
-            #  L += (1 / 2.) * (y[i] - y_)**2 / train_set_size 
-            #  for j in range(len(data)):
-                #  gw[j] += ((y[i] - y_) * (-data[j]) + LAMBDA * w[j]) / train_set_size
-        gb = np.sum(y - y_) / train_set_size
+        for i, data in enumerate(train_set):
+            wx = np.dot(w.transpose(), data)
+            y_ = b + wx
+            L += (1 / 2.) * (y[i] - y_)**2 / train_set_size 
+            for j in range(len(data)):
+                gw[j] += ((y[i] - y_) * (-data[j]) + LAMBDA * w[j]) / train_set_size
+            gb += (y[i] - y_) / train_set_size
         L += LAMBDA * np.sum(w**2) / 2
         if Optimizer == "NON":
             w -= Learning_rate * gw
@@ -148,13 +152,13 @@ if sys.argv[1] == "tr":
         gsum = np.sum(np.abs(gw)) + gb
         print "feature:", feature
         print "iter"+ str(k), "L:", L
-        #  print "gradient of w,b :", gw, gb
-        print "mean of gradient", gsum / (len(gw) + 1)
+        print "gradient of w,b :", gw, gb
+        print "mean of gradient", gsum / (len(gw) + 1)  
         print "Learning_rate:", Learning_rate
         print "Regularization:", LAMBDA
         print "Scaling:", Scaling
         print "Optimizer:", Optimizer
-        if gsum / (len(gw) + 1) < 0.1:
+        if gsum / (len(gw) + 1) < 0.001:
             #  write the weights and bias to file
             out = open('weights/' + weights_file_name + '.weights', 'w')
             out.write(str(k + 1 + time) + ' ')
@@ -166,7 +170,6 @@ if sys.argv[1] == "tr":
             out.write(' ')
             out.write(str(L))
             out.close()
-            break
 #  validate the model
 elif sys.argv[1] == "vd":
     e_train = 0
