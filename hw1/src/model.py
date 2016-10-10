@@ -67,116 +67,79 @@ x = x.reshape(x.shape[0], 9 * len(feature))
 if Scaling == True:
     x_mean = np.mean(x, axis = 0)
     x_std = np.std(x, axis = 0)
-    print x[0]
-    print x[1]
     x = (x - x_mean) / x_std 
-    print x[0]
-    print x[1]
+bias = np.ones(shape = (x.shape[0], 1))
+x = np.concatenate((bias, x), axis = 1)
 
 #  model declaration
-time = 0
-if sys.argv[3] == "NW":
-    #  initial weights
-    w = np.random.rand(x.shape[1])
-    b = np.random.rand() 
-else:
-    #  load weights from weights file
-    wf = open(sys.argv[3], 'r')
-    wlist = wf.read().split(' ')
-    time = int(wlist[0])
-    w = np.asarray(wlist[2:(2 + int(wlist[1]))], dtype = np.float32)
-    b = float(wlist[int(wlist[1]) + 1])
+w = np.random.rand(x.shape[1])
 
 #  train or validate model
 data_set_size = x.shape[0]
-train_set_size = 4000 
+train_set_size = data_set_size 
 train_set = x[:train_set_size]
 validate_set = x[train_set_size:]
 
 #  train the model
 if sys.argv[1] == "tr":
     t = 0
-    iterations = 50000
+    iterations = 500000
     #  for adagrad
     if Optimizer == "Adagrad":
         gw_his = np.zeros(shape = (iterations, x.shape[1]))
-        gb_his = np.zeros(shape = (iterations))
     elif Optimizer == "Adam":
         Beta1 = 0.9
         Beta2 = 0.999
         e = 10**(-8)
         m = np.zeros(shape = w.shape)
         v = np.zeros(shape = w.shape)
-        mb = 0. 
-        vb = 0. 
     #  training
     LAMBDA = Regularization
     for k in range(iterations):
         L = 0
         t = t + 1
         y_ = np.dot(x, w)
-        L = np.sum((y - y_) ** 2) / (2 * train_set_size)
+        L = np.sum((y - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
         gw = np.dot(-x.transpose(), (y - y_)) / train_set_size
-        #  for i, data in enumerate(train_set):
-            #  wx = np.dot(w.transpose(), data)
-            #  y_ = b + wx
-            #  L += (1 / 2.) * (y[i] - y_)**2 / train_set_size 
-            #  for j in range(len(data)):
-                #  gw[j] += ((y[i] - y_) * (-data[j]) + LAMBDA * w[j]) / train_set_size
-        gb = np.sum(y - y_) / train_set_size
-        L += LAMBDA * np.sum(w**2) / 2
         if Optimizer == "NON":
             w -= Learning_rate * gw
-            b -= Learning_rate * gb 
         elif Optimizer == "Adam":
             m = Beta1 * m + (1 - Beta1) * gw
             v = Beta2 * v + (1 - Beta2) * (gw**2)
             m_ = m / (1 - Beta1**t)
             v_ = v / (1 - Beta2**t)
-            mb = Beta1 * mb + (1 - Beta1) * gb
-            vb = Beta2 * vb + (1 - Beta2) * (gb**2)
-            mb_ = mb / (1 - Beta1**t)
-            vb_ = vb / (1 - Beta2**t)
             w -= Learning_rate * m_ / (v_**(0.5) + e) * gw
-            b -= Learning_rate * mb_ / (vb_**(0.5) + e) * gb
         elif Optimizer == "Adagrad":
             gw_his[k] = (gw)**2
-            gb_his[k] = (gb)**2
             w -= (Learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw
-            b -= (Learning_rate / np.sum(gb_his, axis = 0)**0.5) * gb 
         #  print out the current Loss and gradient of weights and bias
-        gsum = np.sum(np.abs(gw)) + gb
+        gsum = np.sum(np.abs(gw)) 
         print "feature:", feature
         print "iter"+ str(k), "L:", L
-        #  print "gradient of w,b :", gw, gb
-        print "mean of gradient", gsum / (len(gw) + 1)
+        print "mean of gradient", gsum / (len(gw))
         print "Learning_rate:", Learning_rate
         print "Regularization:", LAMBDA
         print "Scaling:", Scaling
         print "Optimizer:", Optimizer
-        if gsum / (len(gw) + 1) < 0.1:
-            #  write the weights and bias to file
+        if gsum / (len(gw)) < 0.01:
+            #  write the weights to file
             out = open('weights/' + weights_file_name + '.weights', 'w')
             out.write(str(k + 1 + time) + ' ')
             out.write(str(len(w)) + ' ')
             for i in range(len(w)):
                 out.write(str(w[i]))
                 out.write(' ')
-            out.write(str(b))
-            out.write(' ')
             out.write(str(L))
             out.close()
             break
 #  validate the model
 elif sys.argv[1] == "vd":
-    e_train = 0
-    e_test = 0
-    y_ = np.zeros(shape = y.shape)
-    for i, data in enumerate(x):
-        wx = np.dot(w.transpose(), data)
-        y_[i] = b + wx
-        if i < train_set_size:
-            e_train += np.abs(y[i] - y_[i])
-        else:
-            e_test += np.abs(y[i] - y_[i])
-    print "e_train = ", e_train / train_set_size, "e_test = ", e_test / (data_set_size - train_set_size)
+    #  load model from weights file
+    wf = open(sys.argv[2], 'r')
+    wlist = wf.read().split(' ')
+    w = np.asarray(wlist[2:(2 + int(wlist[1]))], dtype = np.float32)
+    y_ = np.dot(x, w)
+    e = np.abs(y - y_)
+    e_train = np.sum(e[:train_set_size]) / train_set_size
+    e_test = np.sum(e[train_set_size:]) / (data_set_size - train_set_size + 0.000000001)
+    print "e_train = ", e_train, "e_test = ", e_test 

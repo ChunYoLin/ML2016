@@ -46,6 +46,7 @@ x_2 = x**2
 x = np.concatenate((x, x_2), axis = 1)
 x = np.concatenate((bias, x), axis = 1)
 
+
 #  load model from weights file
 wf = open(sys.argv[2], 'r')
 wlist = wf.read().split(' ')
@@ -55,7 +56,7 @@ w = np.asarray(wlist[2:(2 + int(wlist[1]))], dtype = np.float32)
 y = np.dot(x, w)
 
 #  output
-out = open('pred_grad_' + str(len(feature)) + '.csv', 'w')
+out = open('pred_NOR_' + str(len(feature)) + '.csv', 'w')
 out.write("id,value\n")
 for i in range(y.shape[0]):
     out.write('id_' + str(i) + ',' + str(y[i]) + '\n')    
