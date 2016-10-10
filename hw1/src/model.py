@@ -50,18 +50,20 @@ if Regularization > 0:
 if Scaling == True:
     weights_file_name += 'SC_'
 weights_file_name += Optimizer + '_'
+weights_file_name += '8_'
 
 
 #  prepare x and y
 train_data_arr = np.asarray(train_data, dtype=np.float32)
 x = []
 y = []
+hour = 8
 for i in range(len(train_data_arr[0]) - 9):
-    x.append(train_data_arr[feature, i:i+9])
+    x.append(train_data_arr[feature, i+9-hour:i+9])
     y.append(train_data_arr[hash_table["PM2.5"], i+9])
 x = np.asarray(x, dtype = np.float32)
 y = np.asarray(y, dtype = np.float32)
-x = x.reshape(x.shape[0], 9 * len(feature))
+x = x.reshape(x.shape[0], hour * len(feature))
 
 #  featrue scaling
 if Scaling == True:
@@ -98,9 +100,9 @@ if sys.argv[1] == "tr":
     for k in range(iterations):
         L = 0
         t = t + 1
-        y_ = np.dot(x, w)
-        L = np.sum((y - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
-        gw = np.dot(-x.transpose(), (y - y_)) / train_set_size
+        y_ = np.dot(x[:train_set_size], w)
+        L = np.sum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
+        gw = np.dot(-x[:train_set_size].transpose(), (y[:train_set_size] - y_)) / train_set_size
         if Optimizer == "NON":
             w -= Learning_rate * gw
         elif Optimizer == "Adam":
@@ -121,21 +123,20 @@ if sys.argv[1] == "tr":
         print "Regularization:", LAMBDA
         print "Scaling:", Scaling
         print "Optimizer:", Optimizer
-        if gsum / (len(gw)) < 0.01:
+        if gsum / (len(gw)) < 0.00001:
             #  write the weights to file
             out = open('weights/' + weights_file_name + '.weights', 'w')
-            out.write(str(k + 1 + time) + ' ')
+            out.write(str(k) + ' ')
             out.write(str(len(w)) + ' ')
             for i in range(len(w)):
                 out.write(str(w[i]))
                 out.write(' ')
-            out.write(str(L))
             out.close()
             break
 #  validate the model
 elif sys.argv[1] == "vd":
     #  load model from weights file
-    wf = open(sys.argv[2], 'r')
+    wf = open(sys.argv[3], 'r')
     wlist = wf.read().split(' ')
     w = np.asarray(wlist[2:(2 + int(wlist[1]))], dtype = np.float32)
     y_ = np.dot(x, w)

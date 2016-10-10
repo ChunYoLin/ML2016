@@ -55,12 +55,13 @@ if Scaling == True:
 train_data_arr = np.asarray(train_data, dtype=np.float32)
 x = []
 y = []
+hour = 8 
 for i in range(len(train_data_arr[0]) - 9):
-    x.append(train_data_arr[feature, i:i+9])
+    x.append(train_data_arr[feature, i+9-hour:i+9])
     y.append(train_data_arr[hash_table["PM2.5"], i+9])
 x = np.asarray(x, dtype = np.float32)
 y = np.asarray(y, dtype = np.float32)
-x = x.reshape(x.shape[0], 9 * len(feature))
+x = x.reshape(x.shape[0], hour * len(feature))
 
 #  featrue scaling
 if Scaling == True:
@@ -74,7 +75,8 @@ x = np.concatenate((bias, x), axis = 1)
 
 #  train set and validate set
 data_set_size = x.shape[0]
-train_set_size = data_set_size 
+#  train_set_size = data_set_size 
+train_set_size = 4000 
 train_set = x[:train_set_size]
 validate_set = x[train_set_size:]
 

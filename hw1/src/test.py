@@ -36,14 +36,15 @@ for idx, row in enumerate(test_file):
             test_data[int(data[0][3:]), hash_table[data[1]], idx] = v
         else:
             test_data[int(data[0][3:]), hash_table[data[1]], idx] = 0 
-
-x = test_data[:,feature]
+hour = 8
+x = test_data[:,feature,9-hour:]
 test_set_size = x.shape[0]
-x = x.reshape(test_set_size, 9 * len(feature))
+
+x = x.reshape(test_set_size, 8 * len(feature))
 y = np.zeros(shape = test_set_size)
 bias = np.ones(shape = (x.shape[0], 1))
-x_2 = x**2
-x = np.concatenate((x, x_2), axis = 1)
+#  x_2 = x**2
+#  x = np.concatenate((x, x_2), axis = 1)
 x = np.concatenate((bias, x), axis = 1)
 
 #  load model from weights file
