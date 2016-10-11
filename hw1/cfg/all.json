@@ -1,9 +1,0 @@
-{
-  "feature": [
-    "A"
-  ],
-  "Regularization": 10,
-  "Scaling": false,
-  "Learning Rate": 1.5,
-  "Optimizer": "Adagrad"
-}

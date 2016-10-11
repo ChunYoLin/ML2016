@@ -4,6 +4,7 @@ import re
 import math
 import sys
 import json
+import os
 
 #  hash_table for key
 hash_table = {
@@ -25,6 +26,10 @@ for item in cfg_data["feature"]:
     else:
         feature.append(hash_table[item])
 feature.sort()
+Power = cfg_data["Power"]
+Hour = cfg_data["Hour"]
+model = re.sub('.json', '', os.path.basename(sys.argv[1]))
+
 
 #  parse data
 test_data = np.zeros(shape = (240,18,9))
@@ -36,14 +41,17 @@ for idx, row in enumerate(test_file):
             test_data[int(data[0][3:]), hash_table[data[1]], idx] = v
         else:
             test_data[int(data[0][3:]), hash_table[data[1]], idx] = 0 
-
-x = test_data[:,feature]
+x = test_data[:,feature,9-Hour:]
 test_set_size = x.shape[0]
-x = x.reshape(test_set_size, 9 * len(feature))
+x = x.reshape(test_set_size, Hour * len(feature))
 y = np.zeros(shape = test_set_size)
 bias = np.ones(shape = (x.shape[0], 1))
-x_2 = x**2
-x = np.concatenate((x, x_2), axis = 1)
+if Power >= 2:
+    x_2 = x**2
+    x = np.concatenate((x, x_2), axis = 1)
+if Power >= 3:
+    x_3 = x**3
+    x = np.concatenate((x, x_3), axis = 1)
 x = np.concatenate((bias, x), axis = 1)
 
 
@@ -56,7 +64,9 @@ w = np.asarray(wlist[2:(2 + int(wlist[1]))], dtype = np.float32)
 y = np.dot(x, w)
 
 #  output
-out = open('pred_NOR_' + str(len(feature)) + '.csv', 'w')
+pred_name = 'pred_NOR_' + model + '.csv'
+print "writing predict results to file:", pred_name 
+out = open(pred_name, 'w')
 out.write("id,value\n")
 for i in range(y.shape[0]):
     out.write('id_' + str(i) + ',' + str(y[i]) + '\n')    

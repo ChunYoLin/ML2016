@@ -5,6 +5,10 @@ import math
 import sys
 import json
 import os
+import accelerate.cuda as cuda
+from accelerate.cuda.blas import Blas
+def gemm(A,B,dD):
+    return D
 #  hash_table for key
 hash_table = {
     "AMB_TEMP":0, "CH4":1, "CO":2, "NMHC":3, "NO":4, "NO2":5, 
@@ -42,9 +46,6 @@ Regularization = cfg_data["Regularization"]
 Scaling = cfg_data["Scaling"]
 Learning_rate = cfg_data["Learning Rate"]
 Optimizer = cfg_data["Optimizer"]
-Power = cfg_data["Power"]
-Hour = cfg_data["Hour"]
-Stop = cfg_data["Stop"]
 model = re.sub('.json', '', os.path.basename(sys.argv[2]))
 
 weights_file_name = model + '_'
@@ -53,20 +54,20 @@ if Regularization > 0:
 if Scaling == True:
     weights_file_name += 'SC_'
 weights_file_name += Optimizer + '_'
-weights_file_name += str(Hour) + '_'
-weights_file_name += model
+weights_file_name += '8_'
 
 
 #  prepare x and y
 train_data_arr = np.asarray(train_data, dtype=np.float32)
 x = []
 y = []
+hour = 8
 for i in range(len(train_data_arr[0]) - 9):
-    x.append(train_data_arr[feature, i+9-Hour:i+9])
+    x.append(train_data_arr[feature, i+9-hour:i+9])
     y.append(train_data_arr[hash_table["PM2.5"], i+9])
-x = np.asarray(x, dtype = np.float32)
-y = np.asarray(y, dtype = np.float32)
-x = x.reshape(x.shape[0], Hour * len(feature))
+x = np.asarray(x, dtype = np.float64)
+y = np.asarray(y, dtype = np.float64)
+x = x.reshape(x.shape[0], hour * len(feature))
 
 #  featrue scaling
 if Scaling == True:
@@ -74,20 +75,17 @@ if Scaling == True:
     x_std = np.std(x, axis = 0)
     x = (x - x_mean) / x_std 
 bias = np.ones(shape = (x.shape[0], 1))
-if Power >= 2:
-    x_2 = x**2
-    x = np.concatenate((x, x_2), axis = 1)
-if Power >= 3:
-    x_3 = x**3
 x = np.concatenate((bias, x), axis = 1)
-
-data_set_size = x.shape[0]
-train_set_size = data_set_size - cfg_data["Validate Size"]
 
 #  model declaration
 w = np.random.rand(x.shape[1])
 
 #  train or validate model
+data_set_size = x.shape[0]
+train_set_size = data_set_size 
+train_set = x[:train_set_size]
+validate_set = x[train_set_size:]
+
 #  train the model
 if sys.argv[1] == "tr":
     t = 0
@@ -102,11 +100,19 @@ if sys.argv[1] == "tr":
         m = np.zeros(shape = w.shape)
         v = np.zeros(shape = w.shape)
     #  training
+    blas = Blas() 
     LAMBDA = Regularization
     for k in range(iterations):
-        t = t + 1
+        t = t + 1 
+        #  y_ = np.asfortranarray(np.zeros_like(y[:train_set_size]))
         y_ = np.dot(x[:train_set_size], w)
-        L = np.sum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
+        #  M=x[:train_set_size].shape[0] #square matrices
+        #  N=w.shape[0]
+        #  K=1
+        #  blas.gemm('N', 'N', M, N, K, 1.0, x[:train_set_size], w, 1.0, y_)
+        #  print y_, y__
+        L = blas.asum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * blas.asum(w**2) / 2
+        #  L = np.sum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
         gw = np.dot(-x[:train_set_size].transpose(), (y[:train_set_size] - y_)) / train_set_size
         if Optimizer == "NON":
             w -= Learning_rate * gw
@@ -123,21 +129,20 @@ if sys.argv[1] == "tr":
         gsum = np.sum(np.abs(gw)) 
         print "feature:", feature
         print "iter"+ str(k), "L:", L
-        print "mean of gradient:", gsum / (len(gw)),"Stop: ", Stop
+        print "mean of gradient", gsum / (len(gw))
         print "Learning_rate:", Learning_rate
         print "Regularization:", LAMBDA
         print "Scaling:", Scaling
         print "Optimizer:", Optimizer
-        if gsum / (len(gw)) < Stop:
+        if gsum / (len(gw)) < 0.00001:
             #  write the weights to file
-            out = open('weights/' + weights_file_name + '.weights', 'w')
+            out = open('weights/' + weights_file_name + 'gpu_' + '.weights', 'w')
             out.write(str(k) + ' ')
             out.write(str(len(w)) + ' ')
             for i in range(len(w)):
                 out.write(str(w[i]))
                 out.write(' ')
             out.close()
-            break
 #  validate the model
 elif sys.argv[1] == "vd":
     #  load model from weights file

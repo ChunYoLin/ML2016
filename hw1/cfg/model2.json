@@ -1,0 +1,17 @@
+{
+  "feature": [
+	"PM2.5",
+	"O3",
+	"CO",
+	"SO2",
+	"NO2"
+  ],
+  "Hour": 8,
+  "Regularization": 0,
+  "Scaling": true,
+  "Power": 2,
+  "Learning Rate": 100.0,
+  "Validate Size": 0,
+  "Optimizer": "Adagrad",
+  "Stop":0.00001
+}
