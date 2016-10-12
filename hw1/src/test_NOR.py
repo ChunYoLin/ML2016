@@ -26,7 +26,10 @@ for item in cfg_data["feature"]:
     else:
         feature.append(hash_table[item])
 feature.sort()
-Power = cfg_data["Power"]
+Scaling = cfg_data["Scaling"]
+Root = cfg_data["Square Root"]
+Square = cfg_data["Square"]
+Cubed = cfg_data["Cubed"]
 Hour = cfg_data["Hour"]
 model = re.sub('.json', '', os.path.basename(sys.argv[1]))
 
@@ -46,14 +49,16 @@ test_set_size = x.shape[0]
 x = x.reshape(test_set_size, Hour * len(feature))
 y = np.zeros(shape = test_set_size)
 bias = np.ones(shape = (x.shape[0], 1))
-if Power >= 2:
-    x_2 = x**2
+x_root = (x + 10)**0.5
+x_2 = x**2
+x_3 = x**3
+if Root == True:
+    x = np.concatenate((x, x_root), axis = 1)
+if Square == True:
     x = np.concatenate((x, x_2), axis = 1)
-if Power >= 3:
-    x_3 = x**3
+if Cubed == True:
     x = np.concatenate((x, x_3), axis = 1)
 x = np.concatenate((bias, x), axis = 1)
-
 
 #  load model from weights file
 wf = open(sys.argv[2], 'r')

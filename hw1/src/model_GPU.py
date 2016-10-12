@@ -4,6 +4,8 @@ import re
 import math
 import sys
 import json
+import accelerate.cuda as cuda
+from accelerate.cuda.blas import Blas
 import os
 #  hash_table for key
 hash_table = {
@@ -42,9 +44,7 @@ Regularization = cfg_data["Regularization"]
 Scaling = cfg_data["Scaling"]
 Learning_rate = cfg_data["Learning Rate"]
 Optimizer = cfg_data["Optimizer"]
-Root = cfg_data["Square Root"]
-Square = cfg_data["Square"]
-Cubed = cfg_data["Cubed"]
+Power = cfg_data["Power"]
 Hour = cfg_data["Hour"]
 Stop = cfg_data["Stop"]
 model = re.sub('.json', '', os.path.basename(sys.argv[2]))
@@ -76,25 +76,26 @@ if Scaling == True:
     x_std = np.std(x, axis = 0)
     x = (x - x_mean) / x_std 
 bias = np.ones(shape = (x.shape[0], 1))
-x_root = (x + 10)**0.5
+x_root = (x + 1 - np.amin(x))**0.5
 x_2 = x**2
 x_3 = x**3
-if Root == True:
+if Power == 0.5:
     x = np.concatenate((x, x_root), axis = 1)
-if Square == True:
+if Power >= 2:
     x = np.concatenate((x, x_2), axis = 1)
-if Cubed == True:
-    x = np.concatenate((x, x_3), axis = 1)
-x = np.concatenate((bias, x), axis = 1)
+if Power >= 3:
+    x = np.concatenate((bias, x), axis = 1)
 
 data_set_size = x.shape[0]
 train_set_size = data_set_size - cfg_data["Validate Size"]
 
 #  model declaration
 w = np.random.rand(x.shape[1])
+w = w.astype(np.float32)
 
 #  train or validate model
 #  train the model
+blas = Blas()
 if sys.argv[1] == "tr":
     t = 0
     iterations = 500000
@@ -112,7 +113,8 @@ if sys.argv[1] == "tr":
     for k in range(iterations):
         t = t + 1
         y_ = np.dot(x[:train_set_size], w)
-        L = np.sum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
+        x_ = x[:train_set_size]
+        L = blas.asum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * blas.asum(w**2) / 2
         gw = np.dot(-x[:train_set_size].transpose(), (y[:train_set_size] - y_)) / train_set_size
         if Optimizer == "NON":
             w -= Learning_rate * gw
@@ -126,7 +128,7 @@ if sys.argv[1] == "tr":
             gw_his[k] = (gw)**2
             w -= (Learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw
         #  print out the current Loss and gradient of weights and bias
-        gsum = np.sum(np.abs(gw)) 
+        gsum = blas.asum(np.abs(gw)) 
         print "feature:", feature
         print "iter"+ str(k), "L:", L
         print "mean of gradient:", gsum / (len(gw)),"Stop: ", Stop

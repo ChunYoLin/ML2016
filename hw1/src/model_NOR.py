@@ -42,7 +42,9 @@ LAMBDA = cfg_data["Regularization"]
 Scaling = cfg_data["Scaling"]
 Learning_rate = cfg_data["Learning Rate"]
 Optimizer = cfg_data["Optimizer"]
-Power = cfg_data["Power"]
+Root = cfg_data["Square Root"]
+Square = cfg_data["Square"]
+Cubed = cfg_data["Cubed"]
 Hour = cfg_data["Hour"]
 Stop = cfg_data["Stop"]
 model = re.sub('.json', '', os.path.basename(sys.argv[1]))
@@ -71,14 +73,15 @@ if Scaling == True:
     x_std = np.std(x, axis = 0)
     x = (x - x_mean) / x_std 
 bias = np.ones(shape = (x.shape[0], 1))
-if Power == 0.5:
-    x_log = np.log(x + 1 - np.amin(x))
-    x = np.concatenate((x, x_log), axis = 1)
-if Power >= 2:
-    x_2 = x**2
+x_root = (x + 10)**0.5
+x_2 = x**2
+x_3 = x**3
+print np.amin(x)
+if Root == True:
+    x = np.concatenate((x, x_root), axis = 1)
+if Square == True:
     x = np.concatenate((x, x_2), axis = 1)
-if Power >= 3:
-    x_3 = x**3
+if Cubed == True:
     x = np.concatenate((x, x_3), axis = 1)
 x = np.concatenate((bias, x), axis = 1)
 
@@ -94,6 +97,8 @@ e = np.abs(y - y_)
 e_train = np.sum(e[:train_set_size]) / train_set_size
 e_test = np.sum(e[train_set_size:]) / (data_set_size - train_set_size + 0.0000000001)
 print "e_train = ", e_train, "e_test = ", e_test
+L = np.sum((y[:train_set_size] - y_[:train_set_size]) ** 2) / (2 * train_set_size)
+print L
 #  write out the model
 print "-----------------------------"
 print "writing weight to file:", weights_file_name + '.weights' 

@@ -4,6 +4,7 @@ import re
 import math
 import sys
 import json
+import os
 
 #  hash_table for key
 hash_table = {
@@ -25,6 +26,13 @@ for item in cfg_data["feature"]:
     else:
         feature.append(hash_table[item])
 feature.sort()
+Scaling = cfg_data["Scaling"]
+Root = cfg_data["Square Root"]
+Square = cfg_data["Square"]
+Cubed = cfg_data["Cubed"]
+Hour = cfg_data["Hour"]
+model = re.sub('.json', '', os.path.basename(sys.argv[1]))
+
 
 #  parse data
 test_data = np.zeros(shape = (240,18,9))
@@ -36,15 +44,22 @@ for idx, row in enumerate(test_file):
             test_data[int(data[0][3:]), hash_table[data[1]], idx] = v
         else:
             test_data[int(data[0][3:]), hash_table[data[1]], idx] = 0 
-hour = 8
-x = test_data[:,feature,9-hour:]
-test_set_size = x.shape[0]
 
-x = x.reshape(test_set_size, 8 * len(feature))
+#  determine the model
+x = test_data[:,feature,9-Hour:]
+test_set_size = x.shape[0]
+x = x.reshape(test_set_size, Hour * len(feature))
 y = np.zeros(shape = test_set_size)
 bias = np.ones(shape = (x.shape[0], 1))
-#  x_2 = x**2
-#  x = np.concatenate((x, x_2), axis = 1)
+x_root = (x + 10)**0.5
+x_2 = x**2
+x_3 = x**3
+if Root == True:
+    x = np.concatenate((x, x_root), axis = 1)
+if Square == True:
+    x = np.concatenate((x, x_2), axis = 1)
+if Cubed == True:
+    x = np.concatenate((x, x_3), axis = 1)
 x = np.concatenate((bias, x), axis = 1)
 
 #  load model from weights file
@@ -56,7 +71,9 @@ w = np.asarray(wlist[2:(2 + int(wlist[1]))], dtype = np.float32)
 y = np.dot(x, w)
 
 #  output
-out = open('pred_grad_' + str(len(feature)) + '.csv', 'w')
+out_name = sys.argv[3]
+print "writing predict results to file:", out_name 
+out = open(out_name, 'w')
 out.write("id,value\n")
 for i in range(y.shape[0]):
     out.write('id_' + str(i) + ',' + str(y[i]) + '\n')    
