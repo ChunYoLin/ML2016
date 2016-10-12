@@ -97,10 +97,11 @@ w = np.random.rand(x.shape[1])
 #  train the model
 if sys.argv[1] == "tr":
     t = 0
-    iterations = 500000
+    iterations = 5000000
+    out_name = 'weights/linear_regression.weights'
     #  for adagrad
     if Optimizer == "Adagrad":
-        gw_his = np.zeros(shape = (iterations, x.shape[1]))
+        gw_his = 0 
     elif Optimizer == "Adam":
         Beta1 = 0.9
         Beta2 = 0.999
@@ -109,7 +110,7 @@ if sys.argv[1] == "tr":
         v = np.zeros(shape = w.shape)
     #  training
     LAMBDA = Regularization
-    for k in range(iterations):
+    while True:
         t = t + 1
         y_ = np.dot(x[:train_set_size], w)
         L = np.sum((y[:train_set_size] - y_) ** 2) / (2 * train_set_size) + LAMBDA * np.sum(w**2) / 2
@@ -123,12 +124,12 @@ if sys.argv[1] == "tr":
             v_ = v / (1 - Beta2**t)
             w -= Learning_rate * m_ / (v_**(0.5) + e) * gw
         elif Optimizer == "Adagrad":
-            gw_his[k] = (gw)**2
+            gw_his += (gw)**2
             w -= (Learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw
         #  print out the current Loss and gradient of weights and bias
         gsum = np.sum(np.abs(gw)) 
         print "feature:", feature
-        print "iter"+ str(k), "L:", L
+        print "iter"+ str(t), "L:", L
         print "mean of gradient:", gsum / (len(gw)),"Stop: ", Stop
         print "Learning_rate:", Learning_rate
         print "Regularization:", LAMBDA
@@ -136,8 +137,8 @@ if sys.argv[1] == "tr":
         print "Optimizer:", Optimizer
         if gsum / (len(gw)) < Stop:
             #  write the weights to file
-            out = open('weights/' + weights_file_name + '.weights', 'w')
-            out.write(str(k) + ' ')
+            out = open(out_name, 'w')
+            out.write(str(t) + ' ')
             out.write(str(len(w)) + ' ')
             for i in range(len(w)):
                 out.write(str(w[i]))

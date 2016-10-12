@@ -1,2 +1,3 @@
 #!/bin/bash
-python src/test.py cfg/model2.json weights/model2_Adagrad_8_model2.weights linear_regression.csv
+python src/model.py tr cfg/model2.json
+python src/test.py cfg/model2.json weights/linear_regression.weights linear_regression.csv

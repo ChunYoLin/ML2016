@@ -12,8 +12,8 @@
   "Square Root": true,
   "Square": false,
   "Cubed": false,
-  "Learning Rate": 10,
+  "Learning Rate": 40,
   "Validate Size": 0,
   "Optimizer": "Adagrad",
-  "Stop":0.02
+  "Stop":0.1
 }
