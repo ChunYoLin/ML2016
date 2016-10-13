@@ -15,5 +15,5 @@
   "Learning Rate": 40,
   "Validate Size": 0,
   "Optimizer": "Adagrad",
-  "Stop":0.1
+  "Stop":0.0001
 }

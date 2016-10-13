@@ -49,7 +49,7 @@ test_set_size = x.shape[0]
 x = x.reshape(test_set_size, Hour * len(feature))
 y = np.zeros(shape = test_set_size)
 bias = np.ones(shape = (x.shape[0], 1))
-x_root = (x + 10)**0.5
+x_root = (x + 3.6)**0.5
 x_2 = x**2
 x_3 = x**3
 if Root == True:
