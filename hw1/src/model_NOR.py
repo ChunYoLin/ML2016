@@ -73,7 +73,7 @@ if Scaling == True:
     x_std = np.std(x, axis = 0)
     x = (x - x_mean) / x_std 
 bias = np.ones(shape = (x.shape[0], 1))
-x_root = (x + 3.6)**0.5
+x_root = (x + 1.6)**0.5
 x_2 = x**2
 x_3 = x**3
 print np.amin(x)
