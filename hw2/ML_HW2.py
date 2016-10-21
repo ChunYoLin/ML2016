@@ -32,7 +32,7 @@ while True:
     print 'cross entrophy', L
     print 'mean of gradient', gw_mean
     w -= (Learning_rate / np.sum(gw_his, axis = 0)**0.5) * gw 
-    if gw_mean < 0.01:
+    if gw_mean < 0.04:
         w_file_name = './spam.weights'
         w_file = open(w_file_name, 'w')
         for i in range(len(w)):

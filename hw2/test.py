@@ -4,7 +4,7 @@ test_data = open('./spam_data/spam_test.csv', 'r')
 x = []
 for row in test_data:
     row_l = re.sub('\n|\r', '', row).split(',')
-    x.append(row_l[1 : 1 + 55])
+    x.append(row_l[1 : 1 + 56])
 x = np.asarray(x, dtype = np.float32)
 bias = np.ones(shape = (x.shape[0], 1))
 x = np.concatenate((bias, x), axis = 1)
