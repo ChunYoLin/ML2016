@@ -2,7 +2,6 @@ import numpy as np
 import re
 
 train_data = open('./spam_data/spam_train.csv', 'r')
-feature = []
 x = []
 y = []
 for row in train_data:
