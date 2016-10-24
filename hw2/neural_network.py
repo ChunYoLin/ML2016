@@ -1,5 +1,6 @@
 import numpy as np
 import re
+import pickle
 
 
 train_data = open('./spam_data/spam_train.csv', 'r')
