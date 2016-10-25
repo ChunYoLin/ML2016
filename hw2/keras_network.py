@@ -19,10 +19,9 @@ m = x.shape[0]
 train_set_size = m
 
 model = Sequential()
-model.add(Dense(output_dim = 256, input_dim = x.shape[1], activation = 'sigmoid'))
+model.add(Dense(output_dim = 38, input_dim = x.shape[1], activation = 'sigmoid'))
 #  model.add(Dense(output_dim = 128, input_dim = 256, activation = 'sigmoid'))
-model.add(Dense(output_dim = 4, input_dim = 256, activation = 'sigmoid'))
-model.add(Dense(output_dim = 1, input_dim = 4, activation = 'sigmoid'))
+model.add(Dense(output_dim = 1, input_dim = 39, activation = 'sigmoid'))
 model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
 model.fit(x[:train_set_size], y[:train_set_size], nb_epoch = 4000, batch_size = train_set_size)
 
