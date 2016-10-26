@@ -12,7 +12,7 @@ for row in train_data:
 x = np.asarray(x, dtype = np.float32)
 bias = np.ones(shape = (x.shape[0], 1))
 x = np.concatenate((bias, x), axis = 1)
-w = np.zeros(shape = x.shape[1])
+w = np.random.normal(0., 0.01, (x.shape[1]))
 y = np.asarray(y, dtype = np.float32)
 k = x.shape[0]
 Learning_rate = 0.005
