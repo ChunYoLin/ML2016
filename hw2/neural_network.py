@@ -18,13 +18,10 @@ for row in train_data:
     y.append(row_l[len(row_l) - 1])
 
 x_ = np.asarray(x_, dtype = np.float32)
-#  x_mean = np.mean(x_, axis = 0)
-#  x_std = np.std(x_, axis = 0)
-#  x_ = (x_ - np.mean(x_, axis = 0)) / np.std(x_, axis = 0)
 y = np.asarray(y, dtype = np.float32)
 y = y.reshape(y.shape[0], 1)
 L = 3
-s = [x_.shape[1], 64, 1]
+s = [x_.shape[1], 48, 1]
 
 w = [[] for i in range(L - 1)]
 DELTA = [[] for i in range(L - 1)]
@@ -32,8 +29,8 @@ DELTA_his = [[] for i in range(L - 1)]
 m = [[] for i in range(L - 1)]
 v = [[] for i in range(L - 1)]
 for l in range(len(w)):
-    #  w[l] = np.full((s[l] + 1, s[l + 1]), -0.318)
-    w[l] = np.random.normal(0., 0.01, (s[l] + 1, s[l + 1]))
+    #  w[l] = np.random.normal(0., 0.01, (s[l] + 1, s[l + 1]))
+    w[l] = np.random.randn(s[l] + 1, s[l + 1]) * (2. / (s[l] + 1))**0.5
 for l in range(len(DELTA)):
     DELTA[l] = np.zeros_like(w[l])
     DELTA_his[l] = np.zeros_like(w[l])
@@ -43,14 +40,14 @@ a = [[] for i in range(L)]
 a_ = [[] for i in range(L)]
 delta = [[] for i in range(L)]
 k = x_.shape[0]
-#  k = 3800
-lr = .01
+#  k = 3000
+lr = .02
 ITER = 0
 BETA1 = 0.9
 BETA2 = 0.999
 E = 1e-8
 t = 0
-LAMBDA = 0.
+LAMBDA = 0.002
 THREASH = 0.5
 while(True):
     t += 1
@@ -82,7 +79,7 @@ while(True):
     for l in range(L - 1):
         if l != L - 2:
             DELTA[l] = (1. / k) * np.dot(a[l].transpose(), delta[l + 1][:, 1:])
-            DELTA[l][1:] += LAMBDA * w[l][1:]
+            DELTA[l][1:] += (1. / k) * LAMBDA * w[l][1:]
         else:
             DELTA[l] = (1. / k) * np.dot(a[l].transpose(), delta[l + 1]) + LAMBDA * w[l]
         gradient += np.mean(np.abs(DELTA[l]))
@@ -108,13 +105,11 @@ while(True):
     print " acc_train " + str(acc_train / k)
     print " acc_test " + str(acc_test / (x_.shape[0] - k + 0.0000001))
     ITER += 1
-    if ITER == 200000:
+    if ITER == 4000:
         break
 
 
 w_file = open(sys.argv[2], 'w')
-pickle.dump(x_mean, w_file)
-pickle.dump(x_std, w_file)
 pickle.dump(w, w_file)
 w_file.close()
 

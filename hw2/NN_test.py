@@ -10,8 +10,6 @@ def sigmoid(x):
         return 0.
 test_data = open(sys.argv[2], 'r')
 w_file = open(sys.argv[1], 'r')
-x_mean = pickle.load(w_file)
-x_std = pickle.load(w_file)
 w = pickle.load(w_file)
 w_file.close()
 
@@ -20,7 +18,6 @@ for row in test_data:
     row_l = re.sub('\n|\r', '', row).split(',')
     x.append(row_l[1 : 1 + 56])
 x = np.asarray(x, dtype = np.float32)
-x = (x - x_mean) / x_std
 L = 3
 s = [x.shape[1], 38, 1]
 a = [[] for i in range(L)]
