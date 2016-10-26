@@ -1,6 +1,7 @@
 import numpy as np
 import re
 import pickle
+import sys
 
 def sigmoid(x):
     try:
@@ -8,7 +9,7 @@ def sigmoid(x):
     except OverflowError:
         return 0.
 
-train_data = open('./spam_data/spam_train.csv', 'r')
+train_data = open(sys.argv[1], 'r')
 x_ = []
 y = []
 for row in train_data:
@@ -22,8 +23,8 @@ x_std = np.std(x_, axis = 0)
 x_ = (x_ - np.mean(x_, axis = 0)) / np.std(x_, axis = 0)
 y = np.asarray(y, dtype = np.float32)
 y = y.reshape(y.shape[0], 1)
-L = 6
-s = [x_.shape[1], 64, 32, 16, 4, 1]
+L = 5
+s = [x_.shape[1], 38, 26, 18, 1]
 
 w = [[] for i in range(L - 1)]
 DELTA = [[] for i in range(L - 1)]
@@ -42,7 +43,7 @@ a_ = [[] for i in range(L)]
 delta = [[] for i in range(L)]
 k = x_.shape[0]
 #  k = 3500
-Learning_rate = .0002
+Learning_rate = .0001
 ITER = 0
 BETA1 = 0.9
 BETA2 = 0.999
@@ -105,11 +106,11 @@ while(True):
     print " acc_train " + str(acc_train / k)
     print " acc_test " + str(acc_test / (x_.shape[0] - k + 0.0000001))
     ITER += 1
-    if ITER == 10000:
+    if ITER == 50000:
         break
 
 
-w_file = open('./NN.weight', 'w')
+w_file = open(sys.argv[2], 'w')
 pickle.dump(x_mean, w_file)
 pickle.dump(x_std, w_file)
 pickle.dump(w, w_file)
