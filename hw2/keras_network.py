@@ -1,8 +1,13 @@
 from keras.models import Sequential
 from keras.layers import Dense, Activation
+from keras import initializations
 import numpy as np
 import re
-
+from keras import backend as K
+def my_init(shape, name=None):
+    #  value = np.random.random(shape)
+    #  return K.variable(value, name=name)
+    return initializations.normal(shape, scale=0.01, name=name)
 train_data = open('./spam_data/spam_train.csv', 'r')
 x = []
 y = []
@@ -19,11 +24,11 @@ m = x.shape[0]
 train_set_size = m
 
 model = Sequential()
-model.add(Dense(output_dim = 38, input_dim = x.shape[1], activation = 'sigmoid'))
+model.add(Dense(output_dim = 38, input_dim = x.shape[1], activation = 'sigmoid', init = my_init))
 #  model.add(Dense(output_dim = 128, input_dim = 256, activation = 'sigmoid'))
-model.add(Dense(output_dim = 1, input_dim = 39, activation = 'sigmoid'))
+model.add(Dense(output_dim = 1, input_dim = 38, activation = 'sigmoid', init = my_init))
 model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
-model.fit(x[:train_set_size], y[:train_set_size], nb_epoch = 4000, batch_size = train_set_size)
+model.fit(x[:train_set_size], y[:train_set_size], nb_epoch = 20000, batch_size = 4001)
 
 #  test_data = open('./spam_data/spam_test.csv', 'r')
 #  x_ = []

@@ -18,11 +18,11 @@ w_file.close()
 x = []
 for row in test_data:
     row_l = re.sub('\n|\r', '', row).split(',')
-    x.append(row_l[6 : 1 + 55])
+    x.append(row_l[1 : 1 + 56])
 x = np.asarray(x, dtype = np.float32)
 x = (x - x_mean) / x_std
-L = 5
-s = [x.shape[1], 38, 26, 18, 1]
+L = 3
+s = [x.shape[1], 38, 1]
 a = [[] for i in range(L)]
 a[0] = x
 biasa = np.ones(shape = (a[0].shape[0], 1))

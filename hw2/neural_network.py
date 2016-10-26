@@ -14,17 +14,17 @@ x_ = []
 y = []
 for row in train_data:
     row_l = re.sub('\n|\r', '', row).split(',')
-    x_.append(row_l[6 : 1 + 55])
+    x_.append(row_l[1 : 1 + 56])
     y.append(row_l[len(row_l) - 1])
 
 x_ = np.asarray(x_, dtype = np.float32)
-x_mean = np.mean(x_, axis = 0)
-x_std = np.std(x_, axis = 0)
-x_ = (x_ - np.mean(x_, axis = 0)) / np.std(x_, axis = 0)
+#  x_mean = np.mean(x_, axis = 0)
+#  x_std = np.std(x_, axis = 0)
+#  x_ = (x_ - np.mean(x_, axis = 0)) / np.std(x_, axis = 0)
 y = np.asarray(y, dtype = np.float32)
 y = y.reshape(y.shape[0], 1)
-L = 5
-s = [x_.shape[1], 38, 26, 18, 1]
+L = 3
+s = [x_.shape[1], 64, 1]
 
 w = [[] for i in range(L - 1)]
 DELTA = [[] for i in range(L - 1)]
@@ -32,7 +32,8 @@ DELTA_his = [[] for i in range(L - 1)]
 m = [[] for i in range(L - 1)]
 v = [[] for i in range(L - 1)]
 for l in range(len(w)):
-    w[l] = np.full((s[l] + 1, s[l + 1]), -0.318)
+    #  w[l] = np.full((s[l] + 1, s[l + 1]), -0.318)
+    w[l] = np.random.normal(0., 0.01, (s[l] + 1, s[l + 1]))
 for l in range(len(DELTA)):
     DELTA[l] = np.zeros_like(w[l])
     DELTA_his[l] = np.zeros_like(w[l])
@@ -42,17 +43,18 @@ a = [[] for i in range(L)]
 a_ = [[] for i in range(L)]
 delta = [[] for i in range(L)]
 k = x_.shape[0]
-#  k = 3500
-Learning_rate = .0001
+#  k = 3800
+lr = .01
 ITER = 0
 BETA1 = 0.9
 BETA2 = 0.999
-E = 10**(-8)
+E = 1e-8
 t = 0
 LAMBDA = 0.
 THREASH = 0.5
 while(True):
     t += 1
+    lr_t = lr * ((1. - BETA2**t) / (1. - BETA1**t))**0.5
     a[0] = x_[: k]
     biasa = np.ones(shape = (a[0].shape[0], 1))
     a[0] = np.concatenate((biasa, a[0]), axis = 1)
@@ -88,9 +90,9 @@ while(True):
         v[l] = BETA2 * v[l] + (1 - BETA2) * DELTA[l]**2
         m_hat = m[l] / (1 - BETA1**t)
         v_hat = v[l] / (1 - BETA2**t)
-        w[l] -= Learning_rate * m_hat / (v_hat**0.5 + E)
+        w[l] -= lr_t * m_hat / (v_hat**0.5 + E)
         #  DELTA_his[l] += DELTA[l]**2
-        #  w[l] -= (Learning_rate  / np.sum(DELTA_his[l], axis = 0)**0.5) * DELTA[l]
+        #  w[l] -= (lr  / np.sum(DELTA_his[l], axis = 0)**0.5) * DELTA[l]
     acc_train = 0.
     acc_test = 0.
     for i in range(x_.shape[0]):
@@ -106,7 +108,7 @@ while(True):
     print " acc_train " + str(acc_train / k)
     print " acc_test " + str(acc_test / (x_.shape[0] - k + 0.0000001))
     ITER += 1
-    if ITER == 50000:
+    if ITER == 200000:
         break
 
 
