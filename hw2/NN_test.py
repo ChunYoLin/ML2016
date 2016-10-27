@@ -19,7 +19,7 @@ for row in test_data:
     x.append(row_l[1 : 1 + 56])
 x = np.asarray(x, dtype = np.float32)
 L = 3
-s = [x.shape[1], 38, 1]
+s = [x.shape[1], 48, 1]
 a = [[] for i in range(L)]
 a[0] = x
 biasa = np.ones(shape = (a[0].shape[0], 1))

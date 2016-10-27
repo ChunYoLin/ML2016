@@ -105,7 +105,7 @@ while(True):
     print " acc_train " + str(acc_train / k)
     print " acc_test " + str(acc_test / (x_.shape[0] - k + 0.0000001))
     ITER += 1
-    if ITER == 4000:
+    if ITER == 1000:
         break
 
 
