@@ -21,7 +21,7 @@ train_image = []
 train_label = []
 validate_image = []
 validate_label = []
-train_set_size = 500
+train_set_size = 400
 for i in range(10):
     for j in range(500):
         if j < train_set_size:
@@ -44,14 +44,14 @@ sess = tf.InteractiveSession(config = config)
 x = tf.placeholder(tf.float32, shape = (None, 3072))
 y_ = tf.placeholder(tf.float32, shape = (None, 10))
 #  conv layer 1
-W_conv1 = tf.Variable(tf.truncated_normal(shape = [5, 5, 3, 64], stddev = 5e-2))
-b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+W_conv1 = tf.Variable(tf.truncated_normal(shape = [5, 5, 3, 128], stddev = 5e-2))
+b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [128]))
 x_image = tf.reshape(x, [-1, 32, 32, 3])
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = tf.nn.max_pool(h_conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 norm1 = tf.nn.lrn(h_pool1, 4, bias = 1., alpha = 0.001 / 9., beta = 0.75)
 #  conv layer2
-W_conv2 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
+W_conv2 = tf.Variable(tf.truncated_normal(shape = [5, 5, 128, 64], stddev = 5e-2))
 b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
 h_conv2 = tf.nn.relu(conv2d(norm1, W_conv2) + b_conv2)
 norm2 = tf.nn.lrn(h_conv2, 4, bias = 1., alpha = 0.001 / 9., beta = 0.75)
@@ -76,7 +76,7 @@ train_step = tf.train.AdamOptimizer(3e-5).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess.run(tf.initialize_all_variables())
-for k in range(20):
+for k in range(10):
     #  minibatch implementation  
     batch_size = 100
     if k == 0:
@@ -95,26 +95,26 @@ for k in range(20):
     batch = np.asarray(batch)
     #  training
     if k == 0:
-        for i in range(150):
+        for i in range(100):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
                 loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 1.0})
                 loss += loss_val / batch.shape[0]
                 acc += train_accuracy / batch.shape[0]
-                sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 0.5})
+                sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 0.6})
             print "self_training:", k
             print "stage 1: labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
     else:
-        for i in range(30):
+        for i in range(20):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
                 loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob: 1.0})
                 loss += loss_val / batch.shape[0]
                 acc += train_accuracy / batch.shape[0]
-                sess.run(train_step, feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob: 0.5})
+                sess.run(train_step, feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob: 0.6})
             print "self_training:", k
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
@@ -137,10 +137,11 @@ for k in range(20):
     index = np.amax(unlabeled_all_softmax_result, axis = 1) >= 0.9
     self_labeled_image = np.concatenate((train_image, unlabeled_image[index]), axis = 0)
     self_label = np.concatenate((train_label, unlabeled_all_softmax_result[index]), axis = 0)
-    print self_labeled_image.shape, self_label.shape
+    #  print self_labeled_image.shape, self_label.shape
 
 #---validation---#
-    #  print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
+    print "self_training:", k
+    print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
 
 #---testing initial---#
 y_conv_softmax = tf.nn.softmax(y_conv)
