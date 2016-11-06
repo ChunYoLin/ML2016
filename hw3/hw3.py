@@ -137,7 +137,6 @@ for k in range(10):
     index = np.amax(unlabeled_all_softmax_result, axis = 1) >= 0.9
     self_labeled_image = np.concatenate((train_image, unlabeled_image[index]), axis = 0)
     self_label = np.concatenate((train_label, unlabeled_all_softmax_result[index]), axis = 0)
-    #  print self_labeled_image.shape, self_label.shape
 
 #---validation---#
     print "self_training:", k
