@@ -1,27 +1,21 @@
 import cPickle as pk
 import numpy as np
 import tensorflow as tf
+import input_data
 import time
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 def max_pool_3x3(x):
     return tf.nn.max_pool(x, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-#---data preprosseing---#
-all_label = pk.load(open('./data/all_label.p', 'rb'))
-all_unlabel = pk.load(open('./data/all_unlabel.p', 'rb'))
-test = pk.load(open('./data/test.p', 'rb'))
-test_image = np.asarray(test['data'], dtype = np.float32)
-all_label = np.asarray(all_label, dtype = np.float32)
-unlabeled_image = np.asarray(all_unlabel, dtype = np.float32)
-labeled_image = all_label.reshape(all_label.shape[0] * all_label.shape[1], all_label.shape[2])
-label = np.zeros(shape = (labeled_image.shape[0], 10), dtype = np.float32)
-for i in range(10):
-    label[i * 500 : i * 500 + 500, i] = 1
+
+#---partition dataset into train and validation set---#
+dataset = input_data.CIFAR10()
 train_image = []
 train_label = []
 validate_image = []
 validate_label = []
 train_set_size = 400
+labeled_image, label = dataset.labeled_image()
 for i in range(10):
     for j in range(500):
         if j < train_set_size:
@@ -77,22 +71,12 @@ correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess.run(tf.initialize_all_variables())
 for k in range(10):
-    #  minibatch implementation  
+    #  minibatch  
     batch_size = 100
     if k == 0:
-        all_batch = np.arange(train_image.shape[0])
-        all_size = train_image.shape[0]
+        batch = input_data.minibatch(train_image)
     else:
-        all_batch = np.arange(self_labeled_image.shape[0])
-        all_size = self_labeled_image.shape[0]
-    np.random.shuffle(all_batch)
-    batch = []
-    for a in range(all_size / batch_size):
-        single_batch = []
-        for b in range(batch_size):
-            single_batch.append(all_batch[a * batch_size + b])
-        batch.append(single_batch)
-    batch = np.asarray(batch)
+        batch = input_data.minibatch(self_labeled_image)
     #  training
     if k == 0:
         for i in range(100):
@@ -119,6 +103,7 @@ for k in range(10):
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
     #---unlabeled testing initial---#
+    unlabeled_image = dataset.unlabeled_image()
     y_conv_softmax = tf.nn.softmax(y_conv)
     unlabeled_batch_result = tf.argmax(y_conv_softmax, 1)
     unlabeled_all_softmax_result = []
@@ -147,6 +132,7 @@ y_conv_softmax = tf.nn.softmax(y_conv)
 test_batch_result = tf.argmax(y_conv_softmax, 1)
 test_all_result = []
 #  testing
+test_image = dataset.test_image()
 for i in range(100):
     batch_result = sess.run(test_batch_result, feed_dict = {x: test_image[i * 100 : (i + 1) * 100], keep_prob: 1.0})
     test_all_result.append(batch_result)
