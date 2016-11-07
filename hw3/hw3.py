@@ -16,6 +16,7 @@ validate_image = []
 validate_label = []
 train_set_size = 400
 labeled_image, label = dataset.labeled_image()
+labeled_image /= 255.
 for i in range(10):
     for j in range(500):
         if j < train_set_size:
@@ -37,41 +38,47 @@ sess = tf.InteractiveSession(config = config)
 #  input layer and ouput layer
 x = tf.placeholder(tf.float32, shape = (None, 3072))
 y_ = tf.placeholder(tf.float32, shape = (None, 10))
+#  dropout rate
+keep_prob = tf.placeholder(tf.float32)
 #  conv layer 1
-W_conv1 = tf.Variable(tf.truncated_normal(shape = [5, 5, 3, 128], stddev = 5e-2))
+W_conv1 = tf.Variable(tf.random_normal(shape = [5, 5, 3, 128], stddev = 0.01))
 b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [128]))
 x_image = tf.reshape(x, [-1, 32, 32, 3])
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = tf.nn.max_pool(h_conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-#  conv layer2
-W_conv2 = tf.Variable(tf.truncated_normal(shape = [5, 5, 128, 64], stddev = 5e-2))
-b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = tf.nn.max_pool(h_conv2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-#  conv layer3
-W_conv3 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
-b_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-h_pool3 = tf.nn.max_pool(h_conv3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-#  conv layer4
-W_conv4 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
-b_conv4 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv3)
-h_pool4 = tf.nn.max_pool(h_conv4, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-#  conv layer5
-W_conv5 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
-b_conv5 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv4) + b_conv3)
-h_pool5 = tf.nn.max_pool(h_conv5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+h_drop1 = tf.nn.dropout(h_pool1, keep_prob)
+#  #  conv layer2
+#  W_conv2 = tf.Variable(tf.random_normal(shape = [5, 5, 128, 64], stddev = 0.01))
+#  b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+#  h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+#  h_pool2 = tf.nn.max_pool(h_conv2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  h_drop2 = tf.nn.dropout(h_pool2, keep_prob)
+#  #  conv layer3
+#  W_conv3 = tf.Variable(tf.random_normal(shape = [5, 5, 64, 64], stddev = 0.01))
+#  b_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+#  h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+#  h_pool3 = tf.nn.max_pool(h_conv3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  h_drop3 = tf.nn.dropout(h_pool3, keep_prob)
+#  #  conv layer4
+#  W_conv4 = tf.Variable(tf.random_normal(shape = [5, 5, 64, 64], stddev = 0.01))
+#  b_conv4 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+#  h_conv4 = tf.nn.relu(conv2d(h_drop3, W_conv4) + b_conv4)
+#  h_pool4 = tf.nn.max_pool(h_conv4, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  h_drop4 = tf.nn.dropout(h_pool4, keep_prob)
+#  #  conv layer5
+#  W_conv5 = tf.Variable(tf.random_normal(shape = [5, 5, 64, 64], stddev = 0.01))
+#  b_conv5 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+#  h_conv5 = tf.nn.relu(conv2d(h_drop4, W_conv5) + b_conv5)
+#  h_pool5 = tf.nn.max_pool(h_conv5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  h_drop5 = tf.nn.dropout(h_pool5, keep_prob)
 #  fully connected layer 1
-W_fc1 = tf.Variable(tf.truncated_normal(shape = [1 * 1 * 64, 1024], stddev = 0.04))
+W_fc1 = tf.Variable(tf.random_normal(shape = [16 * 16 * 128, 1024], stddev = 0.01))
 b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
-h_pool5_flat = tf.reshape(h_pool5, [-1, 1 * 1 * 64])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
-keep_prob = tf.placeholder(tf.float32)
+h_drop1_flat = tf.reshape(h_drop1, [-1, 16 * 16 * 128])
+h_fc1 = tf.nn.relu(tf.matmul(h_drop1_flat, W_fc1) + b_fc1)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 #  output layer
-W_fc2 = tf.Variable(tf.truncated_normal(shape = [1024, 10], stddev = 1 / 1024.))
+W_fc2 = tf.Variable(tf.random_normal(shape = [1024, 10], stddev = 0.01))
 b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
 y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
@@ -79,11 +86,11 @@ y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 #  define loss
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
 #  adam optimizer
-train_step = tf.train.AdamOptimizer(3e-5).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(2e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess.run(tf.initialize_all_variables())
-for k in range(10):
+for k in range(3):
     #  minibatch  
     batch_size = 100
     if k == 0:
@@ -92,7 +99,7 @@ for k in range(10):
         batch = input_data.minibatch(self_labeled_image)
     #  training
     if k == 0:
-        for i in range(100):
+        for i in range(50):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
@@ -123,7 +130,7 @@ for k in range(10):
             print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
 
     #---unlabeled testing initial---#
-    unlabeled_image = dataset.unlabeled_image()
+    unlabeled_image = dataset.unlabeled_image() / 255.
     y_conv_softmax = tf.nn.softmax(y_conv)
     unlabeled_batch_result = tf.argmax(y_conv_softmax, 1)
     unlabeled_all_softmax_result = []
@@ -149,7 +156,8 @@ y_conv_softmax = tf.nn.softmax(y_conv)
 test_batch_result = tf.argmax(y_conv_softmax, 1)
 test_all_result = []
 #  testing
-test_image = dataset.test_image()
+test_image = dataset.test_image() / 255.
+print 'testing...'
 for i in range(100):
     batch_result = sess.run(test_batch_result, feed_dict = {x: test_image[i * 100 : (i + 1) * 100], keep_prob: 1.0})
     test_all_result.append(batch_result)
