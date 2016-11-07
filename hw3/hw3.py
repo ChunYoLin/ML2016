@@ -50,11 +50,26 @@ b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
 h_conv2 = tf.nn.relu(conv2d(norm1, W_conv2) + b_conv2)
 norm2 = tf.nn.lrn(h_conv2, 4, bias = 1., alpha = 0.001 / 9., beta = 0.75)
 h_pool2 = tf.nn.max_pool(norm2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  conv layer3
+W_conv3 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
+b_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+h_pool3 = tf.nn.max_pool(h_conv3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  conv layer4
+W_conv4 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
+b_conv4 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv3)
+h_pool4 = tf.nn.max_pool(h_conv4, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+#  conv layer5
+W_conv5 = tf.Variable(tf.truncated_normal(shape = [5, 5, 64, 64], stddev = 5e-2))
+b_conv5 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
+h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv4) + b_conv3)
+h_pool5 = tf.nn.max_pool(h_conv5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 #  fully connected layer 1
 W_fc1 = tf.Variable(tf.truncated_normal(shape = [8 * 8 * 64, 1024], stddev = 0.04))
 b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
-h_pool2_flat = tf.reshape(h_pool2, [-1, 8 * 8 * 64])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+h_pool5_flat = tf.reshape(h_pool5, [-1, 8 * 8 * 64])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
 keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 #  output layer
