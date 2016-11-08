@@ -14,7 +14,7 @@ train_image = []
 train_label = []
 validate_image = []
 validate_label = []
-train_set_size = 500
+train_set_size = 400
 labeled_image, label = dataset.labeled_image()
 labeled_image /= 255.
 for i in range(10):
@@ -111,8 +111,8 @@ for k in range(3):
             print "stage 1: labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
             #  validation
-            #  print "self_training:", k
-            #  print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
+            print "self_training:", k
+            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
     else:
         for i in range(20):
             loss = 0.
