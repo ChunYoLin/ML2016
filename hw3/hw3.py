@@ -14,7 +14,7 @@ train_image = []
 train_label = []
 validate_image = []
 validate_label = []
-train_set_size = 400
+train_set_size = 500
 labeled_image, label = dataset.labeled_image()
 labeled_image /= 255.
 for i in range(10):
@@ -41,7 +41,7 @@ y_ = tf.placeholder(tf.float32, shape = (None, 10))
 #  dropout rate
 keep_prob = tf.placeholder(tf.float32)
 #  conv layer 1
-W_conv1 = tf.Variable(tf.random_normal(shape = [5, 5, 3, 128], stddev = 0.01))
+W_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 3, 128], stddev = 5e-2))
 b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [128]))
 x_image = tf.reshape(x, [-1, 32, 32, 3])
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -72,7 +72,7 @@ h_drop1 = tf.nn.dropout(h_pool1, keep_prob)
 #  h_pool5 = tf.nn.max_pool(h_conv5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 #  h_drop5 = tf.nn.dropout(h_pool5, keep_prob)
 #  fully connected layer 1
-W_fc1 = tf.Variable(tf.random_normal(shape = [16 * 16 * 128, 1024], stddev = 0.01))
+W_fc1 = tf.Variable(tf.truncated_normal(shape = [16 * 16 * 128, 1024], stddev = 1 / 1024.))
 b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
 h_drop1_flat = tf.reshape(h_drop1, [-1, 16 * 16 * 128])
 h_fc1 = tf.nn.relu(tf.matmul(h_drop1_flat, W_fc1) + b_fc1)
@@ -99,7 +99,7 @@ for k in range(3):
         batch = input_data.minibatch(self_labeled_image)
     #  training
     if k == 0:
-        for i in range(50):
+        for i in range(100):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
@@ -111,8 +111,8 @@ for k in range(3):
             print "stage 1: labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
             #  validation
-            print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
+            #  print "self_training:", k
+            #  print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
     else:
         for i in range(20):
             loss = 0.
@@ -126,8 +126,8 @@ for k in range(3):
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
             #  validation
-            print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
+            #  print "self_training:", k
+            #  print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
 
     #---unlabeled testing initial---#
     unlabeled_image = dataset.unlabeled_image() / 255.
