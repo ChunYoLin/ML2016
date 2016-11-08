@@ -9,7 +9,7 @@ def conv2d(x, W):
 
 #---partition dataset into train and validation set---#
 with open('./image.pk', 'rb') as im, open('./label.pk') as l:
-    labeled_image = pk.load(im) / 255.
+    labeled_image = pk.load(im)
     label = pk.load(l)
 train_image = []
 train_label = []
@@ -26,8 +26,8 @@ for i in range(10):
             validate_label.append(label[i * 500 + j])
 train_image = np.asarray(train_image)
 train_label = np.asarray(train_label)
-train_image = np.concatenate((train_image, labeled_image[5000:]), axis = 0) 
-train_label = np.concatenate((train_label, label[5000:]), axis = 0)
+#  train_image = np.concatenate((train_image, labeled_image[5000:]), axis = 0) 
+#  train_label = np.concatenate((train_label, label[5000:]), axis = 0)
 validate_image = np.asarray(validate_image)
 validate_label = np.asarray(validate_label)
 #  allow gpu memory growth        
@@ -67,7 +67,7 @@ y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 #  define loss
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
 #  adam optimizer
-train_step = tf.train.AdamOptimizer(2e-4).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(3e-3).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess.run(tf.initialize_all_variables())
@@ -82,7 +82,7 @@ for epoch in range(50):
         loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 1.0})
         loss += loss_val / batch.shape[0]
         acc += train_accuracy / batch.shape[0]
-        sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 0.7})
+        sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 0.6})
     print "epoch %d, loss %g, training accuracy %g"%(epoch, loss, acc)
     #  validation
     print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})

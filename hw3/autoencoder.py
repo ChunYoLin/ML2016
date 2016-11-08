@@ -8,22 +8,22 @@ def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 #---network parameter---#
 n_input = 3072
-
+f_num = [3, 8, 16, 32]
 X = tf.placeholder(tf.float32, shape = (None, n_input))
 #  encode_layer
-W_en_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 3, 64], stddev = 5e-2))
-b_en_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-W_en_conv2 = tf.Variable(tf.truncated_normal(shape = [3, 3, 64, 16], stddev = 5e-2))
-b_en_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [16]))
-W_en_conv3 = tf.Variable(tf.truncated_normal(shape = [3, 3, 16, 16], stddev = 5e-2))
-b_en_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [16]))
+W_en_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, f_num[0], f_num[1]], stddev = 0.05))
+b_en_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [f_num[1]]))
+W_en_conv2 = tf.Variable(tf.truncated_normal(shape = [3, 3, f_num[1], f_num[2]], stddev = 0.05))
+b_en_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [f_num[2]]))
+W_en_conv3 = tf.Variable(tf.truncated_normal(shape = [3, 3, f_num[2], f_num[3]], stddev = 0.05))
+b_en_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [f_num[3]]))
 #  decode layer
-W_de_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 16, 16], stddev = 5e-2))
-b_de_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [16]))
-W_de_conv2 = tf.Variable(tf.truncated_normal(shape = [3, 3, 16, 64], stddev = 5e-2))
-b_de_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-W_de_conv3 = tf.Variable(tf.truncated_normal(shape = [3, 3, 64, 3], stddev = 5e-2))
-b_de_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [3]))
+W_de_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, f_num[3], f_num[2]], stddev = 0.05))
+b_de_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [f_num[2]]))
+W_de_conv2 = tf.Variable(tf.truncated_normal(shape = [3, 3, f_num[2], f_num[1]], stddev = 0.05))
+b_de_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [f_num[1]]))
+W_de_conv3 = tf.Variable(tf.truncated_normal(shape = [3, 3, f_num[1], f_num[0]], stddev = 0.05))
+b_de_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [f_num[0]]))
 #---building encoder and decoder---#
 def encoder(x):
     x_image = tf.reshape(x, [-1, 32, 32, 3])
@@ -60,7 +60,7 @@ y_true = X
 #  define loss
 cost = tf.reduce_mean(tf.pow(y_true - y_pred, 2))
 #  cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y_true, y_pred))
-optimizer = tf.train.AdamOptimizer(0.0005).minimize(cost)
+optimizer = tf.train.AdamOptimizer(0.005).minimize(cost)
 init = tf.initialize_all_variables()
 #  preprocessing data
 dataset = input_data.CIFAR10()
@@ -69,11 +69,12 @@ unlabeled_image = dataset.unlabeled_image()
 all_image = np.concatenate((labeled_image, unlabeled_image), axis = 0) / 255.
 batch_size = 200
 batch = input_data.minibatch(all_image, batch_size = batch_size)
-
+labeled_image /= 255.
+unlabeled_image /= 255.
 #---run the graph---#
 with tf.Session() as sess:
     sess.run(init)
-    for epoch in range(100):
+    for epoch in range(10):
         for i in range(batch.shape[0]):
             _, c, y_p, y_t = sess.run([optimizer, cost, y_pred, y_true], feed_dict = {X: all_image[batch[i]]})
         print 'epoch:' + str(epoch) + ' cost:' + str(c) 
@@ -81,6 +82,7 @@ with tf.Session() as sess:
         print 'y_true:' + str(y_t)
 
 #---encode label and unlabel image---#
+
     label_code = sess.run(encoder_op, feed_dict = {X: labeled_image})
     unlabel_code = []
     for i in range(100):
@@ -99,7 +101,7 @@ for i in range(self_label.shape[0]):
 
 labeled_image = np.concatenate((labeled_image, unlabeled_image), axis = 0)
 label = np.concatenate((label, self_label), axis = 0)
-print 'dump the code'
+print 'dump the image and label......'
 
 with open('image.pk', 'w') as f:
     pk.dump(labeled_image, f)
