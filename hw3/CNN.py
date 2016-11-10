@@ -26,8 +26,8 @@ for i in range(10):
             validate_label.append(label[i * 500 + j])
 train_image = np.asarray(train_image)
 train_label = np.asarray(train_label)
-#  train_image = np.concatenate((train_image, labeled_image[5000:]), axis = 0) 
-#  train_label = np.concatenate((train_label, label[5000:]), axis = 0)
+train_image = np.concatenate((train_image, labeled_image[5000:]), axis = 0) 
+train_label = np.concatenate((train_label, label[5000:]), axis = 0)
 validate_image = np.asarray(validate_image)
 validate_label = np.asarray(validate_label)
 #  allow gpu memory growth        
@@ -41,33 +41,52 @@ x = tf.placeholder(tf.float32, shape = (None, 3072))
 y_ = tf.placeholder(tf.float32, shape = (None, 10))
 keep_prob = tf.placeholder(tf.float32)
 #  conv layer 1
-W_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 3, 128], stddev = 5e-2))
-b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [128]))
+W_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 3, 96], stddev = 5e-2))
+b_conv1 = tf.Variable(tf.constant(value = 0., shape = [96]))
 x_image = tf.reshape(x, [-1, 32, 32, 3])
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = tf.nn.max_pool(h_conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+h_pool1 = tf.nn.max_pool(h_conv1, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 h_drop1 = tf.nn.dropout(h_pool1, keep_prob)
-#  #  conv layer2
-#  W_conv2 = tf.Variable(tf.truncated_normal(shape = [5, 5, 128, 64], stddev = 5e-2))
-#  b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-#  h_conv2 = tf.nn.relu(conv2d(norm1, W_conv2) + b_conv2)
-#  h_pool2 = tf.nn.max_pool(h_conv2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-#  fully connected layer 1
-W_fc1 = tf.Variable(tf.truncated_normal(shape = [16 * 16 * 128, 1024], stddev = 1 / 1024.))
-b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
-h_drop1_flat = tf.reshape(h_drop1, [-1, 16 * 16 * 128])
-h_fc1 = tf.nn.relu(tf.matmul(h_drop1_flat, W_fc1) + b_fc1)
-h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-#  output layer
-W_fc2 = tf.Variable(tf.random_normal(shape = [1024, 10], stddev = 0.01))
-b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
-y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+#  conv layer2
+W_conv2 = tf.Variable(tf.truncated_normal(shape = [3, 3, 96, 96], stddev = 5e-2))
+b_conv2 = tf.Variable(tf.constant(value = 0., shape = [96]))
+h_conv2 = tf.nn.relu(conv2d(h_drop1, W_conv2) + b_conv2)
+h_pool2 = tf.nn.max_pool(h_conv2, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+h_drop2 = tf.nn.dropout(h_pool2, keep_prob)
+#  conv layer3
+W_conv3 = tf.Variable(tf.truncated_normal(shape = [3, 3, 96, 192], stddev = 5e-2))
+b_conv3 = tf.Variable(tf.constant(value = 0., shape = [192]))
+h_conv3 = tf.nn.relu(conv2d(h_drop2, W_conv3) + b_conv3)
+h_drop3 = tf.nn.dropout(h_conv3, keep_prob)
+#  conv layer4
+W_conv4 = tf.Variable(tf.truncated_normal(shape = [1, 1, 192, 192], stddev = 5e-2))
+b_conv4 = tf.Variable(tf.constant(value = 0., shape = [192]))
+h_conv4 = tf.nn.relu(conv2d(h_drop3, W_conv4) + b_conv4)
+h_drop4 = tf.nn.dropout(h_conv4, keep_prob)
+#  conv layer5
+W_conv5 = tf.Variable(tf.truncated_normal(shape = [1, 1, 192, 10], stddev = 5e-2))
+b_conv5 = tf.Variable(tf.constant(value = 0., shape = [10]))
+h_conv5 = tf.nn.relu(conv2d(h_drop4, W_conv5) + b_conv5)
+h_drop5 = tf.nn.dropout(h_conv5, keep_prob)
+h_pool5 = tf.nn.avg_pool(h_drop5, ksize = [1, 8, 8, 1], strides = [1, 8, 8, 1], padding = 'SAME')
+y_conv = tf.reshape(h_pool5, [-1, 10])
+
+#  #  fully connected layer 1
+#  W_fc1 = tf.Variable(tf.truncated_normal(shape = [8 * 8 * 10, 1024], stddev = 1 / 1024.))
+#  b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
+#  h_drop5_flat = tf.reshape(h_drop5, [-1, 8 * 8 * 10])
+#  h_fc1 = tf.nn.relu(tf.matmul(h_drop5_flat, W_fc1) + b_fc1)
+#  h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+#  #  output layer
+#  W_fc2 = tf.Variable(tf.random_normal(shape = [1024, 10], stddev = 0.01))
+#  b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
+#  y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
 #---training initial---#
 #  define loss
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
 #  adam optimizer
-train_step = tf.train.AdamOptimizer(3e-3).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(3e-5).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess.run(tf.initialize_all_variables())
@@ -75,7 +94,7 @@ sess.run(tf.initialize_all_variables())
 batch_size = 100
 batch = input_data.minibatch(train_image, batch_size = batch_size)
 #  training
-for epoch in range(50):
+for epoch in range(2000):
     loss = 0.
     acc = 0.
     for j in range(batch.shape[0]):
