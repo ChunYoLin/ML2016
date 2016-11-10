@@ -36,21 +36,24 @@ config.gpu_options.allow_growth = True
 #---model definition---#
 sess = tf.InteractiveSession(config = config)
 #  input layer and ouput layer
+keep_prob_in = tf.placeholder(tf.float32)
 x = tf.placeholder(tf.float32, shape = (None, 3072))
+x = tf.nn.dropout(x, keep_prob_in)
 y_ = tf.placeholder(tf.float32, shape = (None, 10))
 #  dropout rate
 keep_prob = tf.placeholder(tf.float32)
 #  conv layer 1
-W_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 3, 128], stddev = 5e-2))
-b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [128]))
+W_conv1 = tf.Variable(tf.truncated_normal(shape = [3, 3, 3, 192], stddev = 5e-2))
+b_conv1 = tf.Variable(tf.constant(value = 0.1, shape = [192]))
 x_image = tf.reshape(x, [-1, 32, 32, 3])
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = tf.nn.max_pool(h_conv1, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 h_drop1 = tf.nn.dropout(h_pool1, keep_prob)
-W_conv_out = tf.Variable(tf.truncated_normal(shape = [1, 1, 128, 10]))
-b_conv_out = tf.Variable(tf.constant(value = 0.1, shape = [10]))
-y_conv = tf.nn.relu(conv2d(h_drop1, W_conv_out) + b_conv_out)
-y_conv = tf.nn.avg_pool(y_conv, ksize = [1, 8, 8, 1], strides = [1, 8, 8, 1], padding = 'SAME')
+#  W_conv_out = tf.Variable(tf.truncated_normal(shape = [1, 1, 128, 10]))
+#  b_conv_out = tf.Variable(tf.constant(value = 0.1, shape = [10]))
+#  h_out = tf.nn.relu(conv2d(h_drop1, W_conv_out) + b_conv_out)
+#  y_conv = tf.nn.avg_pool(h_out, ksize = [1, 16, 16, 1], strides = [1, 16, 16, 1], padding = 'SAME')
+#  y_conv = tf.reshape(y_conv ,[-1, 10])
 #  #  conv layer2
 #  W_conv2 = tf.Variable(tf.random_normal(shape = [5, 5, 128, 64], stddev = 0.01))
 #  b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
@@ -76,15 +79,15 @@ y_conv = tf.nn.avg_pool(y_conv, ksize = [1, 8, 8, 1], strides = [1, 8, 8, 1], pa
 #  h_pool5 = tf.nn.max_pool(h_conv5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 #  h_drop5 = tf.nn.dropout(h_pool5, keep_prob)
 #  fully connected layer 1
-#  W_fc1 = tf.Variable(tf.truncated_normal(shape = [16 * 16 * 128, 1024], stddev = 1 / 1024.))
-#  b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
-#  h_drop1_flat = tf.reshape(h_drop1, [-1, 16 * 16 * 128])
-#  h_fc1 = tf.nn.relu(tf.matmul(h_drop1_flat, W_fc1) + b_fc1)
-#  h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-#  #  output layer
-#  W_fc2 = tf.Variable(tf.random_normal(shape = [1024, 10], stddev = 0.01))
-#  b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
-#  y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+W_fc1 = tf.Variable(tf.truncated_normal(shape = [16 * 16 * 192, 1024], stddev = 1 / 1024.))
+b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
+h_drop1_flat = tf.reshape(h_drop1, [-1, 16 * 16 * 192])
+h_fc1 = tf.nn.relu(tf.matmul(h_drop1_flat, W_fc1) + b_fc1)
+h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+#  output layer
+W_fc2 = tf.Variable(tf.random_normal(shape = [1024, 10], stddev = 0.01))
+b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
+y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
 #---training initial---#
 #  define loss
@@ -98,40 +101,40 @@ for k in range(3):
     #  minibatch  
     batch_size = 100
     if k == 0:
-        batch = input_data.minibatch(train_image)
+        batch = input_data.minibatch(train_image, batch_size = batch_size)
     else:
-        batch = input_data.minibatch(self_labeled_image)
+        batch = input_data.minibatch(self_labeled_image, batch_size = batch_size)
     #  training
     if k == 0:
-        for i in range(100):
+        for i in range(150):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
-                loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 1.0})
+                loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob_in: 1.0, keep_prob: 1.0})
                 loss += loss_val / batch.shape[0]
                 acc += train_accuracy / batch.shape[0]
-                sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob: 0.4})
+                sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob_in: 0.8, keep_prob: 0.5})
             print "self_training:", k
             print "stage 1: labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
             #  validation
             print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
+            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
     else:
         for i in range(20):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
-                loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob: 1.0})
+                loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob_in: 1.0, keep_prob: 1.0})
                 loss += loss_val / batch.shape[0]
                 acc += train_accuracy / batch.shape[0]
-                sess.run(train_step, feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob: 0.4})
+                sess.run(train_step, feed_dict = {x: self_labeled_image[batch[j]], y_: self_label[batch[j]], keep_prob_in: 0.8, keep_prob: 0.5})
             print "self_training:", k
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
             #  validation
             print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob: 1.0})
+            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
 
     #---unlabeled testing initial---#
     unlabeled_image = dataset.unlabeled_image() / 255.
