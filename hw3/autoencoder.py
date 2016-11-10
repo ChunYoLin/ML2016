@@ -3,6 +3,7 @@ import tensorflow as tf
 import input_data
 import scipy.spatial.distance
 import cPickle as pk
+from sklearn.neighbors import NearestNeighbors
 
 n_input = 3072
 l = 2
@@ -157,6 +158,19 @@ for i in range(0, train_set_size * 10, train_set_size):
     orig_im.append(np.mean(train_image[i : i + train_set_size], axis = 0))
 orig_im = np.asarray(orig_im)
 orig_SIM = scipy.spatial.distance.cdist(validate_image, orig_im, 'cosine')
+for K in [1, 3, 5, 10, 20, 50, 100]:
+    nbrs = NearestNeighbors(n_neighbors = K, algorithm = 'auto', p = 2, n_jobs = 4).fit(train_code)
+    distances, indices = nbrs.kneighbors(validate_code)
+    acc = 0.
+    for i in range(1000):
+        label_count = np.zeros(shape = (1000, 10))
+        for j in range(K):
+            label_count[i, np.argmax(train_label[indices[i, j]])] += np.sum(distances[i]) / distances[i, j] * (j + 1) 
+        if np.argmax(label_count[i]) == np.argmax(validate_label[i]):
+            acc += 1
+    print 'K value:', K
+    print 'knn accuracy', acc / 1000
+    print '-------------------'
 acc = np.zeros(10)
 correct = np.zeros(10)
 incorrect = np.zeros(10)
@@ -170,7 +184,7 @@ for i in range(1000):
 print 'avg correct dist', correct / acc
 print 'avg incorrect dist', incorrect / (100 - acc)
 print 'accuracy', acc / 100.
-print 'overall accuracy', np.mean(acc)
+print 'overall accuracy', np.mean(acc) / 100.
 
 print '----------------------------------'
 
@@ -188,7 +202,7 @@ for i in range(1000):
 print 'avg correct dist', correct / acc
 print 'avg incorrect dist', incorrect / (100 - acc)
 print 'accuracy', acc / 100.
-print 'overall accuracy', np.mean(acc)
+print 'overall accuracy', np.mean(acc) / 100.
 
 #  acc = 0.
 #  for i in range(self_label.shape[0]):
