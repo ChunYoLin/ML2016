@@ -14,7 +14,7 @@ train_image = []
 train_label = []
 validate_image = []
 validate_label = []
-train_set_size = 400
+train_set_size = 500
 labeled_image, label = dataset.labeled_image()
 labeled_image /= 255.
 for i in range(10):
@@ -97,6 +97,7 @@ train_step = tf.train.AdamOptimizer(2e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess.run(tf.initialize_all_variables())
+saver = tf.train.Saver()
 for k in range(3):
     #  minibatch  
     batch_size = 100
@@ -117,11 +118,13 @@ for k in range(3):
             print "self_training:", k
             print "stage 1: labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
-            #  validation
-            print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
+            #  #  validation
+            #  print "self_training:", k
+            #  print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
+        save_path = saver.save(sess, 'model')
+        print "Model saved in file: %s"%(save_path)
     else:
-        for i in range(20):
+        for i in range(30):
             loss = 0.
             acc = 0.
             for j in range(batch.shape[0]):
@@ -132,9 +135,9 @@ for k in range(3):
             print "self_training:", k
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(i, loss, acc)
-            #  validation
-            print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
+            #  #  validation
+            #  print "self_training:", k
+            #  print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
 
     #---unlabeled testing initial---#
     unlabeled_image = dataset.unlabeled_image() / 255.
@@ -151,11 +154,14 @@ for k in range(3):
         unlabeled_all_argmax_result.append(batch_argmax_result)
     unlabeled_all_softmax_result = np.asarray(unlabeled_all_softmax_result).reshape(-1, 10)
     unlabeled_all_argmax_result = np.asarray(unlabeled_all_argmax_result).reshape(-1)
+    hard_label = np.zeros(shape = unlabeled_all_softmax_result.shape)
+    for i in range(hard_label.shape[0]):
+        hard_label[i, unlabeled_all_argmax_result[i]] = 1.
     #  top 45000 confident self label image 
     #  index = np.argsort(np.amax(unlabeled_all_softmax_result, axis = 1), axis = 0) >= 0
     index = np.amax(unlabeled_all_softmax_result, axis = 1) >= 0.9
     self_labeled_image = np.concatenate((train_image, unlabeled_image[index]), axis = 0)
-    self_label = np.concatenate((train_label, unlabeled_all_softmax_result[index]), axis = 0)
+    self_label = np.concatenate((train_label, hard_label[index]), axis = 0)
 
 
 #---testing initial---#
