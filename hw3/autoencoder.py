@@ -6,8 +6,7 @@ import cPickle as pk
 from sklearn.neighbors import NearestNeighbors
 
 n_input = 3072
-l = 2
-f_num = [3, 64, 64, 64, 64]
+f_num = [3, 128, 128, 32, 64]
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 #  encode_layer
@@ -37,62 +36,62 @@ config.gpu_options.allow_growth = True
 sess = tf.InteractiveSession(config = config)
 
 #---building encoder and decoder---#
-def encoder(x):
+def encoder(l, x):
     if l >= 1:
         x = tf.reshape(x, [-1, 32, 32, 3])
         h_conv1 = conv2d(x, W_en_conv1) + b_en_conv1
-        h_norm1 = tf.nn.lrn(h_conv1, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a1 = tf.nn.relu(h_norm1)
+        #  h_norm1 = tf.nn.lrn(h_conv1, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a1 = tf.nn.relu(h_conv1)
         h_pool1 = tf.nn.max_pool(h_a1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
         x = h_pool1
     if l >= 2:
         h_conv2 = conv2d(x, W_en_conv2) + b_en_conv2
-        h_norm2 = tf.nn.lrn(h_conv2, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a2 = tf.nn.relu(h_norm2)
+        #  h_norm2 = tf.nn.lrn(h_conv2, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a2 = tf.nn.relu(h_conv2)
         h_pool2 = tf.nn.max_pool(h_a2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
         x = h_pool2
     if l >= 3:
         h_conv3 = conv2d(x, W_en_conv3) + b_en_conv3
-        h_norm3 = tf.nn.lrn(h_conv3, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a3 = tf.nn.relu(h_norm3)
+        #  h_norm3 = tf.nn.lrn(h_conv3, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a3 = tf.nn.relu(h_conv3)
         h_pool3 = tf.nn.max_pool(h_a3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
         x = h_pool3
     if l >= 4:
         h_conv4 = conv2d(x, W_en_conv4) + b_en_conv4
-        h_norm4 = tf.nn.lrn(h_conv4, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a4 = tf.nn.relu(h_norm4)
+        #  h_norm4 = tf.nn.lrn(h_conv4, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a4 = tf.nn.relu(h_conv4)
         h_pool4 = tf.nn.max_pool(h_a4, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
         x = h_pool4
     return x
 
-def decoder(x):
+def decoder(l, x):
     if l >= 4: 
         h_conv1 = conv2d(x, W_de_conv1) + b_de_conv1
-        h_norm1 = tf.nn.lrn(h_conv1, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a1 = tf.nn.relu(h_norm1)
+        #  h_norm1 = tf.nn.lrn(h_conv1, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a1 = tf.nn.relu(h_conv1)
         b, h, w, c = h_a1.get_shape().as_list()
         h_upsamp1 = tf.image.resize_images(h_a1, (h * 2, w * 2))
         x = h_upsamp1
     if l >= 3:    
         h_conv2 = conv2d(x, W_de_conv2) + b_de_conv2
-        h_norm2 = tf.nn.lrn(h_conv2, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a2 = tf.nn.relu(h_norm2)
+        #  h_norm2 = tf.nn.lrn(h_conv2, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a2 = tf.nn.relu(h_conv2)
         b, h, w, c = h_a2.get_shape().as_list()
         h_upsamp2 = tf.image.resize_images(h_a2, (h * 2, w * 2))
         x = h_upsamp2
     if l >= 2:
         h_conv3 = conv2d(x, W_de_conv3) + b_de_conv3
-        h_norm3 = tf.nn.lrn(h_conv3, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a3 = tf.nn.relu(h_norm3)
+        #  h_norm3 = tf.nn.lrn(h_conv3, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a3 = tf.nn.relu(h_conv3)
         b, h, w, c = h_a3.get_shape().as_list()
         h_upsamp3 = tf.image.resize_images(h_a3, (h * 2, w * 2))
         x = h_upsamp3
     if l >= 1:
         h_conv4 = conv2d(x, W_de_conv4) + b_de_conv4
-        h_norm4 = tf.nn.lrn(h_conv4, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
-        h_a4 = tf.nn.sigmoid(h_norm4)
+        #  h_norm4 = tf.nn.lrn(h_conv4, 4, bias = 1.0, alpha = 0.001 / 9.0, beta = 0.75)
+        h_a4 = tf.nn.relu(h_conv4)
         b, h, w, c = h_a4.get_shape().as_list()
-        h_upsamp4 = tf.image.resize_images(h_a4, (h * 2, w * 2))
+        h_upsamp4 = tf.image.resize_images(h_conv4, (h * 2, w * 2))
         x = h_upsamp4
     return x
 
@@ -100,45 +99,41 @@ def decoder(x):
 X = tf.placeholder(tf.float32, shape = (None, n_input))
 y_ = tf.placeholder(tf.float32, shape = (None, 10))
 keep_prob = tf.placeholder(tf.float32)
-
-#---construct model---#
-encoder_op = encoder(X)
-b, h, w, c = encoder_op.get_shape().as_list()
-encoder_flat = tf.reshape(encoder_op, [-1, h * w * c])
-W_en_fc = tf.Variable(tf.truncated_normal(shape = [h * w * c, 256], stddev = 0.01))
-b_en_fc = tf.Variable(tf.constant(value = 0.1, shape = [256]))
-code = tf.matmul(encoder_flat, W_en_fc) + b_en_fc
-W_de_fc = tf.Variable(tf.truncated_normal(shape = [256, h * w * c], stddev = 0.01))
-b_de_fc = tf.Variable(tf.constant(value = 0.1, shape = [h * w * c]))
-de_in = tf.matmul(code, W_de_fc) + b_de_fc
-de_in = tf.reshape(de_in, [-1, h, w, c])
-
-#  autoencoder model
-decoder_op = tf.reshape(decoder(encoder_op), [-1, n_input])
-y_pred = decoder_op
-y_true = X
-cost = tf.reduce_mean(tf.pow(y_true - y_pred, 2))
-#  cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y_pred, y_true))
-optimizer = tf.train.AdamOptimizer(0.002).minimize(cost)
-
+sess.run(tf.initialize_all_variables())
 #  preprocessing data
 dataset = input_data.CIFAR10()
 labeled_image, label = dataset.labeled_image()
 unlabeled_image = dataset.unlabeled_image()
 all_image = np.concatenate((labeled_image, unlabeled_image), axis = 0) / 255.
-batch_size = 200
+batch_size = 50
 batch = input_data.minibatch(all_image, batch_size = batch_size)
 labeled_image /= 255.
 unlabeled_image /= 255.
-
-
-#---train the autoencoder---#
-sess.run(tf.initialize_all_variables())
-e = 40
-for epoch in range(e):
-    for i in range(batch.shape[0]):
-        _, c, y_p, y_t = sess.run([optimizer, cost, y_pred, y_true], feed_dict = {X: all_image[batch[i]]})
-        print 'epoch ' + str(epoch + 1) + '/'+ str(e) + ' batch '  + str(i + 1) + '/' + str(batch.shape[0]) +' cost:' + str(c) 
+for l in range(1, 4, 1):
+#---construct model---#
+    encoder_op = encoder(l, X)
+    #  autoencoder model
+    decoder_op = tf.reshape(decoder(l, encoder_op), [-1, n_input])
+    y_pred = decoder_op
+    y_true = X
+    cost = tf.reduce_mean(tf.pow(y_true - y_pred, 2))
+    #  cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y_pred, y_true))
+    optimizer = tf.train.AdamOptimizer(0.0005).minimize(cost)
+    uninitialized_vars = []
+    for var in tf.all_variables():
+        try:
+            sess.run(var)
+        except tf.errors.FailedPreconditionError:
+            uninitialized_vars.append(var)
+    init_new_vars_op = tf.initialize_variables(uninitialized_vars)
+    sess.run(init_new_vars_op)
+    #---train the autoencoder---#
+    e = 10
+    for epoch in range(e):
+        for i in range(batch.shape[0]):
+            _, c, y_p, y_t = sess.run([optimizer, cost, y_pred, y_true], feed_dict = {X: all_image[batch[i]]})
+            print 'fine tune, num of layer', l
+            print 'epoch ' + str(epoch + 1) + '/'+ str(e) + ' batch '  + str(i + 1) + '/' + str(batch.shape[0]) +' cost:' + str(c) 
 
         
 #---encode label and unlabel image---#
