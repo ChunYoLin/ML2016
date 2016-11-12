@@ -35,35 +35,6 @@ with tf.device('/cpu'):
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
     h_pool1 = tf.nn.max_pool(h_conv1, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
     h_drop1 = tf.nn.dropout(h_pool1, keep_prob)
-    #  W_conv_out = tf.Variable(tf.truncated_normal(shape = [1, 1, 128, 10]))
-    #  b_conv_out = tf.Variable(tf.constant(value = 0.1, shape = [10]))
-    #  h_out = tf.nn.relu(conv2d(h_drop1, W_conv_out) + b_conv_out)
-    #  y_conv = tf.nn.avg_pool(h_out, ksize = [1, 16, 16, 1], strides = [1, 16, 16, 1], padding = 'SAME')
-    #  y_conv = tf.reshape(y_conv ,[-1, 10])
-    #  #  conv layer2
-    #  W_conv2 = tf.Variable(tf.random_normal(shape = [5, 5, 128, 64], stddev = 0.01))
-    #  b_conv2 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-    #  h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-    #  h_pool2 = tf.nn.max_pool(h_conv2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-    #  h_drop2 = tf.nn.dropout(h_pool2, keep_prob)
-    #  #  conv layer3
-    #  W_conv3 = tf.Variable(tf.random_normal(shape = [5, 5, 64, 64], stddev = 0.01))
-    #  b_conv3 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-    #  h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-    #  h_pool3 = tf.nn.max_pool(h_conv3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-    #  h_drop3 = tf.nn.dropout(h_pool3, keep_prob)
-    #  #  conv layer4
-    #  W_conv4 = tf.Variable(tf.random_normal(shape = [5, 5, 64, 64], stddev = 0.01))
-    #  b_conv4 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-    #  h_conv4 = tf.nn.relu(conv2d(h_drop3, W_conv4) + b_conv4)
-    #  h_pool4 = tf.nn.max_pool(h_conv4, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-    #  h_drop4 = tf.nn.dropout(h_pool4, keep_prob)
-    #  #  conv layer5
-    #  W_conv5 = tf.Variable(tf.random_normal(shape = [5, 5, 64, 64], stddev = 0.01))
-    #  b_conv5 = tf.Variable(tf.constant(value = 0.1, shape = [64]))
-    #  h_conv5 = tf.nn.relu(conv2d(h_drop4, W_conv5) + b_conv5)
-    #  h_pool5 = tf.nn.max_pool(h_conv5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-    #  h_drop5 = tf.nn.dropout(h_pool5, keep_prob)
     #  fully connected layer 1
     W_fc1 = tf.Variable(tf.truncated_normal(shape = [16 * 16 * 192, 1024], stddev = 1 / 1024.))
     b_fc1 = tf.Variable(tf.constant(value = 0.1, shape = [1024]))
@@ -83,7 +54,6 @@ with tf.device('/cpu'):
     correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     sess.run(tf.initialize_all_variables())
-    saver = tf.train.Saver()
     for k in range(3):
         #  minibatch  
         batch_size = 100
@@ -107,8 +77,6 @@ with tf.device('/cpu'):
                 #  validation
                 print "self_training:", k
                 print "validation set accuracy", sess.run(accuracy, feed_dict = {x: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0})
-            save_path = saver.save(sess, 'model')
-            print "Model saved in file: %s"%(save_path)
         else:
             for i in range(30):
                 loss = 0.
