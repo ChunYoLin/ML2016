@@ -19,9 +19,8 @@ def minibatch(X, batch_size = 50, Shuffle = True):
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 
-
 def label_classifier(X):
-    print X.shape
+    print "classify data shape", X.shape
     #  allow gpu memory growth        
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -63,7 +62,10 @@ def label_classifier(X):
     saver = tf.train.Saver()
     sess = tf.InteractiveSession()
     saver.restore(sess, 'model')
-    return sess.run(label_out, feed_dict = {x: X, keep_prob_in: 1., keep_prob: 1.})
+    label = sess.run(label_out, feed_dict = {x: X, keep_prob_in: 1., keep_prob: 1.}) 
+    sess.close()
+    return label 
+
 class CIFAR10:
     def __init__(self):
         pass
@@ -75,7 +77,24 @@ class CIFAR10:
         label = np.zeros(shape = (labeled_image.shape[0], 10), dtype = np.float32)
         for i in range(10):
             label[i * 500 : i * 500 + 500, i] = 1
-        return labeled_image, label
+            train_image = []
+            train_label = []
+            validate_image = []
+            validate_label = []
+            train_set_size = 400
+            for i in range(10):
+                for j in range(500):
+                    if j < train_set_size:
+                        train_image.append(labeled_image[i * 500 + j])
+                        train_label.append(label[i * 500 + j])
+                    else:
+                        validate_image.append(labeled_image[i * 500 + j])
+                        validate_label.append(label[i * 500 + j])
+            train_image = np.asarray(train_image)
+            train_label = np.asarray(train_label)
+            validate_image = np.asarray(validate_image)
+            validate_label = np.asarray(validate_label)
+        return labeled_image, label, train_image, train_label, validate_image, validate_label
     def unlabeled_image(self):
         #  loading data from pikcle file
         all_unlabel = pk.load(open('./data/all_unlabel.p', 'rb'))
