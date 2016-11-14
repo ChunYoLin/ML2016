@@ -52,19 +52,9 @@ def label_classifier(X):
     b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
     label_out = tf.nn.softmax(y_conv)
-    
-    #  define loss
-    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
-    #  adam optimizer
-    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
     saver = tf.train.Saver()
     sess = tf.InteractiveSession()
-    saver.restore(sess, './model/CNN/model')
-    label = sess.run(label_out, feed_dict = {x: X, keep_prob_in: 1., keep_prob: 1.}) 
-    sess.close()
-    return label 
+    return label_out
 
 class CIFAR10:
     def __init__(self):
