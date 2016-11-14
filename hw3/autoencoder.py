@@ -5,7 +5,10 @@ import scipy.spatial.distance
 import cPickle as pk
 from sklearn.neighbors import NearestNeighbors
 n_input = 3072
-f_num = [3, 128, 128, 192, 192, 192, 192, 10]
+L = 2
+f_num = [3, 32, 64, 128, 192, 192, 192, 10]
+f_size = [0, 3, 3, 3, 3, 3, 1, 1]
+max_pool = [1, 2]
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 #  encode_layer
@@ -53,77 +56,125 @@ def encoder(l, x):
         x = tf.reshape(x, [-1, 32, 32, 3])
         h_conv1 = conv2d(x, W_en_conv1) + b_en_conv1
         h_a1 = tf.nn.relu(h_conv1)
-        h_pool1 = tf.nn.max_pool(h_a1, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-        x = h_a1
+        h_pool1 = tf.nn.max_pool(h_a1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 1 in max_pool:
+            x = h_pool1
+        else:
+            x = h_a1
     if l >= 2:
         h_conv2 = conv2d(x, W_en_conv2) + b_en_conv2
         h_a2 = tf.nn.relu(h_conv2)
-        h_pool2 = tf.nn.max_pool(h_a2, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-        x = h_pool2
+        h_pool2 = tf.nn.max_pool(h_a2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 2 in max_pool:
+            x = h_pool2
+        else:
+            x = h_a2
     if l >= 3:
         h_conv3 = conv2d(x, W_en_conv3) + b_en_conv3
         h_a3 = tf.nn.relu(h_conv3)
-        h_pool3 = tf.nn.max_pool(h_a3, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-        x = h_pool3
+        h_pool3 = tf.nn.max_pool(h_a3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 3 in max_pool:
+            x = h_pool3
+        else:
+            x = h_a3
     if l >= 4:
         h_conv4 = conv2d(x, W_en_conv4) + b_en_conv4
         h_a4 = tf.nn.relu(h_conv4)
-        h_pool4 = tf.nn.max_pool(h_a4, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-        x = h_pool4
+        h_pool4 = tf.nn.max_pool(h_a4, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 4 in max_pool:
+            x = h_pool4
+        else:
+            x = h_a4
     if l >= 5:
         h_conv5 = conv2d(x, W_en_conv5) + b_en_conv5
         h_a5 = tf.nn.relu(h_conv5)
-        h_pool5 = tf.nn.max_pool(h_a5, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
-        x = h_pool5
+        h_pool5 = tf.nn.max_pool(h_a5, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 5 in max_pool:
+            x = h_pool5
+        else:
+            x = h_a5
     if l >= 6:
         h_conv6 = conv2d(x, W_en_conv6) + b_en_conv6
         h_a6 = tf.nn.relu(h_conv6)
-        x = h_a6
+        h_pool6 = tf.nn.max_pool(h_a6, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 6 in max_pool:
+            x = h_pool6
+        else:
+            x = h_a6
     if l >= 7:
         h_conv7 = conv2d(x, W_en_conv7) + b_en_conv7
         h_a7 = tf.nn.relu(h_conv7)
-        x = h_a7
+        h_pool7 = tf.nn.max_pool(h_a7, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+        if 7 in max_pool:
+            x = h_pool7
+        else:
+            x = h_a7
     return x
 
 def decoder(l, x):
     if l >= 7: 
         h_conv7 = conv2d(x, W_de_conv7) + b_de_conv7
         h_a7 = tf.nn.relu(h_conv7)
-        x = h_a7
+        b, h, w, c = h_a7.get_shape().as_list()
+        h_upsamp7 = tf.image.resize_images(h_a7, (h * 2, w * 2))
+        if 7 in max_pool:
+            x = h_upsamp7
+        else:
+            x = h_a7
     if l >= 6: 
         h_conv6 = conv2d(x, W_de_conv6) + b_de_conv6
         h_a6 = tf.nn.relu(h_conv6)
-        x = h_a6
+        b, h, w, c = h_a6.get_shape().as_list()
+        h_upsamp6 = tf.image.resize_images(h_a6, (h * 2, w * 2))
+        if 6 in max_pool:
+            x = h_upsamp6
+        else:
+            x = h_a6
     if l >= 5: 
         h_conv5 = conv2d(x, W_de_conv5) + b_de_conv5
         h_a5 = tf.nn.relu(h_conv5)
         b, h, w, c = h_a5.get_shape().as_list()
         h_upsamp5 = tf.image.resize_images(h_a5, (h * 2, w * 2))
-        x = h_upsamp5
+        if 5 in max_pool:
+            x = h_upsamp5
+        else:
+            x = h_a5
     if l >= 4: 
         h_conv4 = conv2d(x, W_de_conv4) + b_de_conv4
         h_a4 = tf.nn.relu(h_conv4)
         b, h, w, c = h_a4.get_shape().as_list()
         h_upsamp4 = tf.image.resize_images(h_a4, (h * 2, w * 2))
-        x = h_upsamp4
+        if 4 in max_pool:
+            x = h_upsamp4
+        else:
+            x = h_a4
     if l >= 3:    
         h_conv3 = conv2d(x, W_de_conv3) + b_de_conv3
         h_a3 = tf.nn.relu(h_conv3)
         b, h, w, c = h_a3.get_shape().as_list()
         h_upsamp3 = tf.image.resize_images(h_a3, (h * 2, w * 2))
-        x = h_upsamp3
+        if 3 in max_pool:
+            x = h_upsamp3
+        else:
+            x = h_a3
     if l >= 2:
         h_conv2 = conv2d(x, W_de_conv2) + b_de_conv2
         h_a2 = tf.nn.relu(h_conv2)
         b, h, w, c = h_a2.get_shape().as_list()
         h_upsamp2 = tf.image.resize_images(h_a2, (h * 2, w * 2))
-        x = h_upsamp2
+        if 2 in max_pool:
+            x = h_upsamp2
+        else:
+            x = h_a2
     if l >= 1:
         h_conv1 = conv2d(x, W_de_conv1) + b_de_conv1
         h_a1 = tf.nn.relu(h_conv1)
         b, h, w, c = h_a1.get_shape().as_list()
         h_upsamp1 = tf.image.resize_images(h_a1, (h * 2, w * 2))
-        x = h_a1
+        if 1 in max_pool:
+            x = h_upsamp1
+        else:
+            x = h_a1
     return x
 
 #---network parameter---#
@@ -142,7 +193,6 @@ batch_size = 50
 batch = input_data.minibatch(all_image, batch_size = batch_size)
 labeled_image /= 255.
 unlabeled_image /= 255.
-L = 5
 for l in range(1, L + 1, 1):
 #---construct model---#
     encoder_op = encoder(l, X)
@@ -173,9 +223,9 @@ saver = tf.train.Saver({
     'W1': W_en_conv1, 'b1': b_en_conv1,
     'W2': W_en_conv2, 'b2': b_en_conv2, 
     'W3': W_en_conv3, 'b3': b_en_conv3, 
-    'W4': W_en_conv4, 'b4': b_en_conv4, 
-    'W5': W_en_conv5, 'b5': b_en_conv5,
+    #  'W4': W_en_conv4, 'b4': b_en_conv4, 
+    #  'W5': W_en_conv5, 'b5': b_en_conv5,
     #  'W6': W_en_conv6, 'b6': b_en_conv6,
     #  'W7': W_en_conv7, 'b7': b_en_conv7,
     })
-saver.save(sess, "./w.t")
+saver.save(sess, "./pretrain.ckpt")

@@ -104,3 +104,4 @@ class CIFAR10:
         test = pk.load(open('./data/test.p', 'rb'))
         test_image = np.asarray(test['data'], dtype = np.float32)
         return test_image
+        
