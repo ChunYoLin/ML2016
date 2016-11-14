@@ -61,7 +61,7 @@ def label_classifier(X):
 
     saver = tf.train.Saver()
     sess = tf.InteractiveSession()
-    saver.restore(sess, 'model')
+    saver.restore(sess, './model/CNN/model')
     label = sess.run(label_out, feed_dict = {x: X, keep_prob_in: 1., keep_prob: 1.}) 
     sess.close()
     return label 
@@ -95,6 +95,15 @@ class CIFAR10:
             validate_image = np.asarray(validate_image)
             validate_label = np.asarray(validate_label)
         return labeled_image, label, train_image, train_label, validate_image, validate_label
+    def image_flip(self, image):
+        #  all_label = pk.load(open('./data/all_label.p', 'rb'))
+        #  all_label = np.asarray(all_label, dtype = np.float32)
+        image = image.reshape(-1, 3, 32, 32)
+        flip_image = np.zeros_like(image)
+        for i in range(flip_image.shape[0]):
+            for j in range(3):
+                flip_image[i, j] = np.fliplr(image[i, j])
+        return flip_image
     def unlabeled_image(self):
         #  loading data from pikcle file
         all_unlabel = pk.load(open('./data/all_unlabel.p', 'rb'))
