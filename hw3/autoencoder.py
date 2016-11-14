@@ -5,10 +5,10 @@ import scipy.spatial.distance
 import cPickle as pk
 from sklearn.neighbors import NearestNeighbors
 n_input = 3072
-L = 2
-f_num = [3, 32, 64, 128, 192, 192, 192, 10]
+L = 7
+f_num = [3, 96, 96, 192, 192, 192, 192, 10]
 f_size = [0, 3, 3, 3, 3, 3, 1, 1]
-max_pool = [1, 2]
+max_pool = [2, 4]
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 #  encode_layer
@@ -212,7 +212,7 @@ for l in range(1, L + 1, 1):
     init_new_vars_op = tf.initialize_variables(uninitialized_vars)
     sess.run(init_new_vars_op)
     #---train the autoencoder---#
-    e = 5 * l
+    e = 5 
     for epoch in range(e):
         for i in range(batch.shape[0]):
             _, c, y_p, y_t = sess.run([optimizer, cost, y_pred, y_true], feed_dict = {X: all_image[batch[i]]})
@@ -223,9 +223,9 @@ saver = tf.train.Saver({
     'W1': W_en_conv1, 'b1': b_en_conv1,
     'W2': W_en_conv2, 'b2': b_en_conv2, 
     'W3': W_en_conv3, 'b3': b_en_conv3, 
-    #  'W4': W_en_conv4, 'b4': b_en_conv4, 
-    #  'W5': W_en_conv5, 'b5': b_en_conv5,
-    #  'W6': W_en_conv6, 'b6': b_en_conv6,
-    #  'W7': W_en_conv7, 'b7': b_en_conv7,
+    'W4': W_en_conv4, 'b4': b_en_conv4, 
+    'W5': W_en_conv5, 'b5': b_en_conv5,
+    'W6': W_en_conv6, 'b6': b_en_conv6,
+    'W7': W_en_conv7, 'b7': b_en_conv7,
     })
 saver.save(sess, "./pretrain.ckpt")
