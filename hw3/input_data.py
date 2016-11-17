@@ -15,6 +15,19 @@ def minibatch(X, batch_size = 50, Shuffle = True):
         batch.append(single_batch)
     batch = np.asarray(batch)
     return batch
+def batch_norm(x, n_out, phase_train):
+    with tf.variable_scope('bn'):
+        beta = tf.Variable(tf.constant(0.0, shape=[n_out]), name = 'beta', trainable=True)
+        gamma = tf.Variable(tf.constant(1.0, shape=[n_out]), name = 'gamma', trainable=True)
+        batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name = 'moments')
+        ema = tf.train.ExponentialMovingAverage(decay = 0.5)
+        def mean_var_with_update():
+            ema_apply_op = ema.apply([batch_mean, batch_var])
+            with tf.control_dependencies([ema_apply_op]):
+                return tf.identity(batch_mean), tf.identity(batch_var)
+        mean, var = tf.cond(phase_train, mean_var_with_update, lambda: (ema.average(batch_mean), ema.average(batch_var)))
+        normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+    return normed
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
