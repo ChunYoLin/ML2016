@@ -4,14 +4,17 @@ import input_data
 import scipy.spatial.distance
 import cPickle as pk
 from sklearn.neighbors import NearestNeighbors
+import sys
 n_input = 3072
-L = 7
-f_num = [3, 96, 96, 96, 192, 192, 192, 10]
+L = 2
+f_num = [3, 256, 512, 96, 192, 192, 192, 10]
 f_size = [0, 3, 3, 3, 3, 3, 1, 1]
-max_pool = [3, 6]
+max_pool = [1, 2]
 phase_train = tf.placeholder(tf.bool, name = 'phase_train')
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
+def conv2_2d(x, W):
+    return tf.nn.conv2d(x, W, strides = [1, 2, 2, 1], padding = 'SAME')
 #  encode_layer
 W_en_conv1 = tf.Variable(tf.random_normal(shape = [3, 3, f_num[0], f_num[1]], stddev = 0.01))
 b_en_conv1 = tf.Variable(tf.constant(value = 0., shape = [f_num[1]]))
@@ -73,7 +76,7 @@ def encoder(l, x):
         else:
             x = h_a2
     if l >= 3:
-        h_conv3 = conv2d(x, W_en_conv3) + b_en_conv3
+        h_conv3 = conv2_2d(x, W_en_conv3) + b_en_conv3
         h_conv_bn_3 = input_data.batch_norm(h_conv3, f_num[3], phase_train)
         h_a3 = tf.nn.relu(h_conv_bn_3)
         h_pool3 = tf.nn.max_pool(h_a3, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
@@ -100,7 +103,7 @@ def encoder(l, x):
         else:
             x = h_a5
     if l >= 6:
-        h_conv6 = conv2d(x, W_en_conv6) + b_en_conv6
+        h_conv6 = conv2_2d(x, W_en_conv6) + b_en_conv6
         h_conv_bn_6 = input_data.batch_norm(h_conv6, f_num[6], phase_train)
         h_a6 = tf.nn.relu(h_conv_bn_6)
         h_pool6 = tf.nn.max_pool(h_a6, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
@@ -131,7 +134,7 @@ def decoder(l, x):
         else:
             x = h_a7
     if l >= 6: 
-        h_conv6 = conv2d(x, W_de_conv6) + b_de_conv6
+        h_conv6 = conv2_2d(x, W_de_conv6) + b_de_conv6
         h_conv_bn_6 = input_data.batch_norm(h_conv6, f_num[5], phase_train)
         h_a6 = tf.nn.relu(h_conv_bn_6)
         b, h, w, c = h_a6.get_shape().as_list()
@@ -161,7 +164,7 @@ def decoder(l, x):
         else:
             x = h_a4
     if l >= 3:    
-        h_conv3 = conv2d(x, W_de_conv3) + b_de_conv3
+        h_conv3 = conv2_2d(x, W_de_conv3) + b_de_conv3
         h_conv_bn_3 = input_data.batch_norm(h_conv3, f_num[2], phase_train)
         h_a3 = tf.nn.relu(h_conv_bn_3)
         b, h, w, c = h_a3.get_shape().as_list()
@@ -197,7 +200,7 @@ X = tf.placeholder(tf.float32, shape = (None, n_input))
 y_ = tf.placeholder(tf.float32, shape = (None, 10))
 sess.run(tf.initialize_all_variables())
 #  preprocessing data
-dataset = input_data.CIFAR10()
+dataset = input_data.CIFAR10(sys.argv[1])
 labeled_image, label, train_image, train_label, validate_image, validate_label = dataset.labeled_image()
 train_image /= 255.
 validate_image /= 255.
@@ -226,7 +229,7 @@ for l in range(1, L + 1, 1):
     init_new_vars_op = tf.initialize_variables(uninitialized_vars)
     sess.run(init_new_vars_op)
     #---train the autoencoder---#
-    e = 5 
+    e = 5 * l
     for epoch in range(e):
         for i in range(batch.shape[0]):
             _, c, y_p, y_t = sess.run([optimizer, cost, y_pred, y_true], feed_dict = {X: all_image[batch[i]], phase_train: True})
@@ -236,10 +239,10 @@ for l in range(1, L + 1, 1):
 saver = tf.train.Saver({
     'W1': W_en_conv1, 'b1': b_en_conv1,
     'W2': W_en_conv2, 'b2': b_en_conv2, 
-    'W3': W_en_conv3, 'b3': b_en_conv3, 
-    'W4': W_en_conv4, 'b4': b_en_conv4, 
-    'W5': W_en_conv5, 'b5': b_en_conv5,
-    'W6': W_en_conv6, 'b6': b_en_conv6,
-    'W7': W_en_conv7, 'b7': b_en_conv7,
+    #  'W3': W_en_conv3, 'b3': b_en_conv3, 
+    #  'W4': W_en_conv4, 'b4': b_en_conv4, 
+    #  'W5': W_en_conv5, 'b5': b_en_conv5,
+    #  'W6': W_en_conv6, 'b6': b_en_conv6,
+    #  'W7': W_en_conv7, 'b7': b_en_conv7,
     })
 saver.save(sess, "./pretrain.ckpt")
