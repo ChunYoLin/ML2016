@@ -75,7 +75,12 @@ b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
 y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
 sess.run(tf.initialize_all_variables())
-saver = tf.train.Saver()
+saver = tf.train.Saver({
+    'W1': W_conv[1], 'b1': b_conv[1], 
+    'W2': W_conv[2], 'b2': b_conv[2], 
+    'W_fc1': W_fc1, 'b_fc1': b_fc1,
+    'W_fc2': W_fc2, 'b_fc2': b_fc2,
+    })
 saver.restore(sess, sys.argv[2])
 
 #---testing initial---#

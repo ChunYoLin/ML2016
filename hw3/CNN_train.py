@@ -129,7 +129,7 @@ for k in range(3):
             #  vacc = sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
             #  print "validation set accuracy", vacc
     else:
-        e = 20
+        e = 30
         for epoch in range(e):
             loss = 0.
             acc = 0.
@@ -166,7 +166,12 @@ for k in range(3):
         hard_label[i, unlabeled_all_argmax_result[i]] = 1.
     self_labeled_image = np.concatenate((train_image, unlabeled_image[index]), axis = 0)
     self_label = np.concatenate((train_label, hard_label[index]), axis = 0)
+saver = tf.train.Saver({
+    'W1': W_conv[1], 'b1': b_conv[1], 
+    'W2': W_conv[2], 'b2': b_conv[2], 
+    'W_fc1': W_fc1, 'b_fc1': b_fc1,
+    'W_fc2': W_fc2, 'b_fc2': b_fc2,
+    })
 
-saver = tf.train.Saver()
 saver.save(sess, sys.argv[2])
 
