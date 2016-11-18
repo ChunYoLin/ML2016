@@ -65,11 +65,11 @@ def label_classifier(X):
     saver.restore(sess, 'model')
     return sess.run(label_out, feed_dict = {x: X, keep_prob_in: 1., keep_prob: 1.})
 class CIFAR10:
-    def __init__(self):
-        pass
+    def __init__(self, DIR):
+        self.DIR = DIR
     def labeled_image(self):
         #  loading data from pikcle file
-        all_label = pk.load(open('./data/all_label.p', 'rb'))
+        all_label = pk.load(open(self.DIR + 'all_label.p', 'rb'))
         all_label = np.asarray(all_label, dtype = np.float32)
         labeled_image = all_label.reshape(all_label.shape[0] * all_label.shape[1], all_label.shape[2])
         label = np.zeros(shape = (labeled_image.shape[0], 10), dtype = np.float32)
@@ -78,11 +78,11 @@ class CIFAR10:
         return labeled_image, label
     def unlabeled_image(self):
         #  loading data from pikcle file
-        all_unlabel = pk.load(open('./data/all_unlabel.p', 'rb'))
+        all_unlabel = pk.load(open(self.DIR + 'all_unlabel.p', 'rb'))
         unlabeled_image = np.asarray(all_unlabel, dtype = np.float32)
         return unlabeled_image
     def test_image(self):
         #  loading data from pikcle file
-        test = pk.load(open('./data/test.p', 'rb'))
+        test = pk.load(open(self.DIR + 'test.p', 'rb'))
         test_image = np.asarray(test['data'], dtype = np.float32)
         return test_image

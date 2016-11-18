@@ -1,14 +1,16 @@
-import tensorflow as tf
+import cPickle as pk
 import numpy as np
+import tensorflow as tf
 import input_data
 import time
+import sys
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 def max_pool_3x3(x):
     return tf.nn.max_pool(x, ksize = [1, 3, 3, 1], strides = [1, 2, 2, 1], padding = 'SAME')
 
 #---partition dataset into train and validation set---#
-dataset = input_data.CIFAR10()
+dataset = input_data.CIFAR10(sys.argv[1])
 train_image = []
 train_label = []
 validate_image = []
@@ -66,8 +68,41 @@ cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y
 train_step = tf.train.AdamOptimizer(2e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+y_conv_softmax = tf.nn.softmax(y_conv)
+test_batch_result = tf.argmax(y_conv_softmax, 1)
 
-saver = tf.train.Saver()
-sess = tf.InteractiveSession()
-saver.restore(sess, 'model')
+sess.run(tf.initialize_all_variables())
+saver = tf.train.Saver({
+    'W_conv1': W_conv1, 'b_conv1': b_conv1,
+    'W_fc1': W_fc1, 'b_fc1': b_fc1,
+    'W_fc2': W_fc2, 'b_fc1': b_fc2,
+    })
+saver.restore(sess, sys.argv[2])
+print 'loading the model......'
 
+batch_size = 100
+batch = input_data.minibatch(train_image, batch_size = batch_size)
+#  training
+for i in range(1):
+    loss = 0.
+    acc = 0.
+    for j in range(batch.shape[0]):
+        loss_val, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob_in: 1.0, keep_prob: 1.0})
+        loss += loss_val / batch.shape[0]
+        acc += train_accuracy / batch.shape[0]
+        sess.run(train_step, feed_dict = {x: train_image[batch[j]], y_: train_label[batch[j]], keep_prob_in: 0.8, keep_prob: 0.5})
+
+#---testing initial---#
+test_all_result = []
+#  testing
+test_image = dataset.test_image() / 255.
+print 'testing...'
+for i in range(100):
+    batch_result = sess.run(test_batch_result, feed_dict = {x: test_image[i * 100 : (i + 1) * 100], keep_prob: 1.0})
+    test_all_result.append(batch_result)
+test_all_result = np.asarray(test_all_result).reshape(-1)
+#  output the testing result
+with open(sys.argv[3], 'w') as result_file:
+    result_file.write('ID,class\n')
+    for i in range(test_all_result.shape[0]):
+        result_file.write(str(i) + ',' + str(test_all_result[i]) + '\n')
