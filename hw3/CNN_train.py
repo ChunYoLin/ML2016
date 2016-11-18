@@ -37,7 +37,7 @@ keep_prob = tf.placeholder(tf.float32)
 keep_prob_in = tf.placeholder(tf.float32)
 conv_l = 2
 fc_l = 1
-f_num = [3, 256, 512, 96, 192, 192, 192, 10]
+f_num = [3, 128, 256, 96, 192, 192, 192, 10]
 f_size = [0, 3, 3, 3, 3, 3, 1, 1]
 max_pool = [1, 2]
 glb_avg = False
@@ -98,11 +98,6 @@ sess.run(tf.initialize_all_variables())
 saver = tf.train.Saver({
     'W1': W_conv[1], 'b1': b_conv[1], 
     'W2': W_conv[2], 'b2': b_conv[2], 
-    #  'W3': W_conv[3], 'b3': b_conv[3], 
-    #  'W4': W_conv[4], 'b4': b_conv[4], 
-    #  'W5': W_conv[5], 'b5': b_conv[5], 
-    #  'W6': W_conv[6], 'b6': b_conv[6], 
-    #  'W7': W_conv[7], 'b7': b_conv[7],
     })
 saver.restore(sess, "./pretrain.ckpt")
 #  minibatch  
@@ -114,7 +109,7 @@ for k in range(3):
     else:
         batch = input_data.minibatch(self_labeled_image, batch_size = batch_size)
     if k == 0:
-        e = 100
+        e = 50
         print train_image.shape
         for epoch in range(e):
             acc = 0.
@@ -126,8 +121,8 @@ for k in range(3):
                 sess.run(train_step, feed_dict = {X: train_image[batch[j]], y_: train_label[batch[j]], keep_prob_in: 1.0, keep_prob: 0.6, phase_train: True})
             print "epoch %d/%d, loss %g, training accuracy %g"%(epoch + 1, e, loss, acc)
             #  validation
-            #  vacc = sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
-            #  print "validation set accuracy", vacc
+            vacc = sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
+            print "validation set accuracy", vacc
     else:
         e = 30
         for epoch in range(e):
@@ -142,8 +137,8 @@ for k in range(3):
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(epoch, loss, acc)
             #  validation
-            #  print "self_training:", k
-            #  print "validation set accuracy", sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
+            print "self_training:", k
+            print "validation set accuracy", sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
 
     #---unlabeled testing initial---#
     unlabeled_image = dataset.unlabeled_image() / 255.

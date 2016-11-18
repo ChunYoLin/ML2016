@@ -7,7 +7,7 @@ from sklearn.neighbors import NearestNeighbors
 import sys
 n_input = 3072
 L = 2
-f_num = [3, 256, 512, 96, 192, 192, 192, 10]
+f_num = [3, 128, 256, 96, 192, 192, 192, 10]
 f_size = [0, 3, 3, 3, 3, 3, 1, 1]
 max_pool = [1, 2]
 phase_train = tf.placeholder(tf.bool, name = 'phase_train')
@@ -239,10 +239,5 @@ for l in range(1, L + 1, 1):
 saver = tf.train.Saver({
     'W1': W_en_conv1, 'b1': b_en_conv1,
     'W2': W_en_conv2, 'b2': b_en_conv2, 
-    #  'W3': W_en_conv3, 'b3': b_en_conv3, 
-    #  'W4': W_en_conv4, 'b4': b_en_conv4, 
-    #  'W5': W_en_conv5, 'b5': b_en_conv5,
-    #  'W6': W_en_conv6, 'b6': b_en_conv6,
-    #  'W7': W_en_conv7, 'b7': b_en_conv7,
     })
 saver.save(sess, "./pretrain.ckpt")
