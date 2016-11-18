@@ -19,9 +19,6 @@ labeled_image /= 255.
 labeled_image_flip = dataset.image_flip(labeled_image).reshape(-1, 3072)
 train_image = np.concatenate((labeled_image, labeled_image_flip), axis = 0)
 train_label = np.concatenate((label, label), axis = 0)
-#  train_image_flip = dataset.image_flip(train_image).reshape(-1, 3072)
-#  train_image = np.concatenate((train_image, train_image_flip), axis = 0)
-#  train_label = np.concatenate((train_label, train_label), axis = 0)
 
 #  allow gpu memory growth        
 config = tf.ConfigProto()
@@ -104,7 +101,7 @@ for k in range(3):
     else:
         batch = input_data.minibatch(self_labeled_image, batch_size = batch_size)
     if k == 0:
-        e = 50
+        e = 100
         print train_image.shape
         for epoch in range(e):
             acc = 0.
@@ -115,9 +112,6 @@ for k in range(3):
                 loss += loss_val / batch.shape[0]
                 sess.run(train_step, feed_dict = {X: train_image[batch[j]], y_: train_label[batch[j]], keep_prob_in: 1.0, keep_prob: 0.6, phase_train: True})
             print "epoch %d/%d, loss %g, training accuracy %g"%(epoch + 1, e, loss, acc)
-            #  validation
-            vacc = sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
-            print "validation set accuracy", vacc
     else:
         e = 30
         for epoch in range(e):
@@ -131,9 +125,6 @@ for k in range(3):
             print "self_training:", k
             print "stage 2: add self labeled training"
             print "epoch %d, loss %g, training accuracy %g"%(epoch, loss, acc)
-            #  validation
-            print "self_training:", k
-            print "validation set accuracy", sess.run(accuracy, feed_dict = {X: validate_image, y_: validate_label, keep_prob_in: 1.0, keep_prob: 1.0, phase_train: False})
 
     #---unlabeled testing initial---#
     unlabeled_image = dataset.unlabeled_image() / 255.
