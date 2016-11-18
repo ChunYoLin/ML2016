@@ -15,13 +15,25 @@ def minibatch(X, batch_size = 50, Shuffle = True):
         batch.append(single_batch)
     batch = np.asarray(batch)
     return batch
+def batch_norm(x, n_out, phase_train):
+    with tf.variable_scope('bn'):
+        beta = tf.Variable(tf.constant(0.0, shape=[n_out]), name = 'beta', trainable=True)
+        gamma = tf.Variable(tf.constant(1.0, shape=[n_out]), name = 'gamma', trainable=True)
+        batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name = 'moments')
+        ema = tf.train.ExponentialMovingAverage(decay = 0.5)
+        def mean_var_with_update():
+            ema_apply_op = ema.apply([batch_mean, batch_var])
+            with tf.control_dependencies([ema_apply_op]):
+                return tf.identity(batch_mean), tf.identity(batch_var)
+        mean, var = tf.cond(phase_train, mean_var_with_update, lambda: (ema.average(batch_mean), ema.average(batch_var)))
+        normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+    return normed
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides = [1, 1, 1, 1], padding = 'SAME')
 
-
 def label_classifier(X):
-    print X.shape
+    print "classify data shape", X.shape
     #  allow gpu memory growth        
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -53,17 +65,10 @@ def label_classifier(X):
     b_fc2 = tf.Variable(tf.constant(value = 0., shape = [10]))
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
     label_out = tf.nn.softmax(y_conv)
-    
-    #  define loss
-    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
-    #  adam optimizer
-    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
     saver = tf.train.Saver()
     sess = tf.InteractiveSession()
-    saver.restore(sess, 'model')
-    return sess.run(label_out, feed_dict = {x: X, keep_prob_in: 1., keep_prob: 1.})
+    return label_out
+
 class CIFAR10:
     def __init__(self, DIR):
         self.DIR = DIR
@@ -75,7 +80,33 @@ class CIFAR10:
         label = np.zeros(shape = (labeled_image.shape[0], 10), dtype = np.float32)
         for i in range(10):
             label[i * 500 : i * 500 + 500, i] = 1
-        return labeled_image, label
+            train_image = []
+            train_label = []
+            validate_image = []
+            validate_label = []
+            train_set_size = 400
+            for i in range(10):
+                for j in range(500):
+                    if j < train_set_size:
+                        train_image.append(labeled_image[i * 500 + j])
+                        train_label.append(label[i * 500 + j])
+                    else:
+                        validate_image.append(labeled_image[i * 500 + j])
+                        validate_label.append(label[i * 500 + j])
+            train_image = np.asarray(train_image)
+            train_label = np.asarray(train_label)
+            validate_image = np.asarray(validate_image)
+            validate_label = np.asarray(validate_label)
+        return labeled_image, label, train_image, train_label, validate_image, validate_label
+    def image_flip(self, image):
+        #  all_label = pk.load(open('./data/all_label.p', 'rb'))
+        #  all_label = np.asarray(all_label, dtype = np.float32)
+        image = image.reshape(-1, 3, 32, 32)
+        flip_image = np.zeros_like(image)
+        for i in range(flip_image.shape[0]):
+            for j in range(3):
+                flip_image[i, j] = np.fliplr(image[i, j])
+        return flip_image
     def unlabeled_image(self):
         #  loading data from pikcle file
         all_unlabel = pk.load(open(self.DIR + 'all_unlabel.p', 'rb'))
@@ -86,3 +117,4 @@ class CIFAR10:
         test = pk.load(open(self.DIR + 'test.p', 'rb'))
         test_image = np.asarray(test['data'], dtype = np.float32)
         return test_image
+        
