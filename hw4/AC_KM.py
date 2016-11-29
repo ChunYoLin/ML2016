@@ -3,6 +3,8 @@ import re
 import numpy as np
 import tensorflow as tf
 from sklearn.cluster import KMeans
+from sklearn import preprocessing
+from collections import OrderedDict
 
 def minibatch(X, batch_size = 50, Shuffle = True):
     all_batch = np.arange(X.shape[0])
@@ -17,36 +19,76 @@ def minibatch(X, batch_size = 50, Shuffle = True):
         batch.append(single_batch)
     batch = np.asarray(batch)
     return batch
-
-with open('./reduce_titleV2.txt', 'r') as f:
+with open('./docs.txt', 'r') as f1, open('./title_StackOverflow.txt', 'r') as f2:
     word_set = {}
-    w_id = 0
+    doc = []
+    doc_line = ''
+    line = 0
+    #  for row in f1:
+        #  doc_line += row
+        #  line += 1
+        #  if line == 40:
+            #  doc.append(doc_line)
+            #  line = 0
+            #  doc_line = ''
     title = []
-    for TITLE in f:
-        title.append(TITLE)
-        for w in re.split('\W+', TITLE):
-            if w.lower() not in word_set and w != '':
-                word_set[w.lower()] = w_id
-                w_id += 1
-title_wd = np.zeros(shape = (len(title), len(word_set)))
-print len(word_set)
-print len(title)
-for idx, t in enumerate(title):
-    for w in re.split('\W+', t):
-        if w != '':
-            title_wd[idx, word_set[w.lower()]] += 1
+    for row in f2:
+        doc.append(row)
+        title.append(row)
+    for text in doc:
+        idf_list = []
+        for w in re.split('\W+', text):
+            w = w.lower()
+            if w not in word_set:
+                word_set[w] = 1
+                idf_list.append(w)
+            elif w not in idf_list:
+                word_set[w] += 1
 
-idf = np.zeros(shape = len(word_set))
-for i in range(len(word_set)):
-    for j in range(len(title)):
-        if title_wd[j, i] > 0:
-            idf[i] += 1.
+    word_set_sorted = OrderedDict(sorted(word_set.items(), key = lambda x: x[1], reverse = True))
+    idx = 0
+    del_set = set()
+    for k, v in word_set_sorted.iteritems():
+        idx += 1
+        if idx <= 20:
+            del_set.add(k)
+            del word_set_sorted[k]
+        if v <= 4:
+            del_set.add(k)
+            del word_set_sorted[k]
+    word_set_id = {}
+    w_id = 0
+    for k in word_set_sorted.keys():
+        word_set_id[k] = w_id
+        w_id += 1
+    doc_wd = np.zeros(shape = (len(doc), len(word_set_id)))
+    title_wd = np.zeros(shape = (len(title), len(word_set_id)))
+    for idx, d in enumerate(doc):
+        for w in re.split('\W+', d):
+            w = w.lower()
+            if w not in del_set:
+                doc_wd[idx, word_set_id[w]] += 1
+    for idx, t in enumerate(title):
+        for w in re.split('\W+', t):
+            w = w.lower()
+            if w not in del_set:
+                title_wd[idx, word_set_id[w]] += 1
+
+idf = np.zeros(shape = len(word_set_id))
+for k, v in word_set_id.iteritems():
+    idf[v] = word_set_sorted[k]
 idf = len(title) / idf
 title_wd *= np.log(idf)
+doc_wd *= np.log(idf)
+#  min_max_scaler = preprocessing.MinMaxScaler()
+#  title_wd = min_max_scaler.fit_transform(title_wd)
+#  title_wd -= np.mean(title_wd, axis = 0)
+#  title_wd /= np.std(title_wd, axis = 0)
+print len(word_set_sorted)
 #  input
-X = tf.placeholder(tf.float32, shape = [None, len(word_set)])
-l_num = 5
-f_num = [len(word_set), 2000, 500, 250, 125, 10]
+X = tf.placeholder(tf.float32, shape = [None, len(word_set_sorted)])
+l_num = 4
+f_num = [len(word_set_sorted), 2000, 1000, 500, 5]
 
 W_en = [0]
 b_en = [0]
@@ -70,29 +112,37 @@ for i in range(1, l_num + 1, 1):
     a_de.append(tf.nn.relu(h_de[i]))
     print a_de[i - 1].get_shape(), a_de[i].get_shape()
 
-y_pred = a_de[l_num]
+y_pred = h_de[l_num]
 y_true = X
 encoder = h_en[l_num]
 cost = tf.reduce_mean(tf.pow(y_pred - y_true, 2))
-train_step = tf.train.AdamOptimizer(0.001).minimize(cost)
+#  cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y_pred, y_true))
+train_step = tf.train.AdamOptimizer(0.0001).minimize(cost)
 init = tf.initialize_all_variables()
 sess = tf.InteractiveSession()
 sess.run(init)
-
-batch = minibatch(title_wd)
-e = 50
+train_set = title_wd
+batch = minibatch(train_set, batch_size = 50)
+e = 10
 for epoch in range(e):
     for b_id in range(batch.shape[0]):
-        _, loss = sess.run([train_step, cost], feed_dict = {X:title_wd[batch[b_id]]})    
-        print sess.run(a_de[l_num], feed_dict = {X:title_wd[0:1]})
-        print title_wd[0:1]
+        _, loss = sess.run([train_step, cost], feed_dict = {X: train_set[batch[b_id]]})    
+        a = sess.run(h_de[l_num], feed_dict = {X: train_set[2:3]})
+        x = 0
+        for i in range(len(word_set_id)):
+            if train_set[2, i] != 0:
+                print train_set[2, i], a[0, i]
+            elif x < 10:
+                print train_set[2, i], a[0, i]
+                x+=1
         print 'epoch %d / %d, batch %d / %d, loss %g'%(epoch + 1, e, b_id + 1, batch.shape[0], loss)
 code = []
 for i in range(200):
     code.append(sess.run(encoder, feed_dict = {X:title_wd[i * 100 : (i+1) * 100]}))
 code = np.asarray(code).reshape(len(title), -1)
-#  print code[0:50]
+print code[0:10]
 Group = KMeans(n_clusters = 20, random_state = 0).fit_predict(code)
+
 
 with open('./check_index.csv', 'r') as f_in, open('pred.csv', 'w') as f_out:
     f_out.write('ID,Ans\n')
