@@ -50,7 +50,7 @@ for w in stopwords:
 IDX = 0
 for k, v in word_set_sorted.iteritems():
     IDX += 1
-    if IDX <= 40:
+    if IDX <= 20:
         ignore_word.add(k)
     if v < 4:
         ignore_word.add(k)
@@ -77,11 +77,11 @@ print model.similar_by_word('windows')
 sent_vec = np.zeros(shape = (len(title), fea_num))
 for i in range(len(title)):
     for w in title[i]:
-        norm_len = 0
+        norm_len = 0.
         if w not in ignore_word:
-            norm_len += 1
+            norm_len += 1.
             weight = np.log((len(corpus) - word_set[w] + 0.5)/ (word_set[w] + 0.5))
-            sent_vec[i] += model[w] * weight
+            sent_vec[i] += model[w]
         if norm_len != 0:
             sent_vec[i] /= norm_len
 center = []
@@ -103,8 +103,9 @@ center_num = 20
 for i in range(center_num):
     center.append(model[top_20[i]])
 center = np.asarray(center)
-Group = KMeans(n_clusters = 20, init = center, n_init = 1, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
-tag = np.zeros(shape = 20, dtype = np.int32)
+#  Group = KMeans(n_clusters = 20, init = center, n_init = 1, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
+Group = KMeans(n_clusters = 21, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
+tag = np.zeros(shape = 21, dtype = np.int32)
 for c in Group:
     tag[c] += 1
 print tag
@@ -117,6 +118,6 @@ with open('./check_index.csv', 'r') as f_in, open('pred.csv', 'w') as f_out:
                 f_out.write(str(p[0]) + ',' + str(1) + '\n')
             else:
                 f_out.write(str(p[0]) + ',' + str(0) + '\n')
-reduced_data = PCA(n_components = 2).fit_transform(sent_vec)
-plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group, s = 20)
-plt.show()
+#  reduced_data = PCA(n_components = 2).fit_transform(sent_vec)
+#  plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
+#  plt.show()
