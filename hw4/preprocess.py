@@ -4,7 +4,7 @@ import numpy as np
 import nltk
 from collections import OrderedDict
 class Corpus:
-    def __init__(self, c = 'both', file_path = './'):
+    def __init__(self, c = 'both', file_path = './data/'):
         #  corpus
         corpus = []
         if c == 'title':

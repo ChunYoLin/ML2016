@@ -50,7 +50,7 @@ for c in Group:
     tag[c] += 1
 print len(title.word_set)
 print tag
-with open('./check_index.csv', 'r') as f_in, open('pred.csv', 'w') as f_out:
+with open('./data/check_index.csv', 'r') as f_in, open('pred.csv', 'w') as f_out:
     f_out.write('ID,Ans\n')
     for idx, pair in enumerate(f_in):
         p = pair.split(',')

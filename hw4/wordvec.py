@@ -31,8 +31,8 @@ for i in range(len(title.corpus)):
             sent_vec[i] += model[w]
         if norm_len != 0:
             sent_vec[i] /= norm_len
-Group = KMeans(n_clusters = 21, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
-tag = np.zeros(shape = 21, dtype = np.int32)
+Group = KMeans(n_clusters = 25, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
+tag = np.zeros(shape = 25, dtype = np.int32)
 for c in Group:
     tag[c] += 1
 print tag
@@ -45,6 +45,6 @@ with open(sys.argv[1] + 'check_index.csv', 'r') as f_in, open(sys.argv[2], 'w') 
                 f_out.write(str(p[0]) + ',' + str(1) + '\n')
             else:
                 f_out.write(str(p[0]) + ',' + str(0) + '\n')
-reduced_data = PCA(n_components = 2).fit_transform(sent_vec)
-plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
-plt.show()
+#  reduced_data = PCA(n_components = 2).fit_transform(sent_vec)
+#  plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
+#  plt.show()
