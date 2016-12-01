@@ -83,6 +83,7 @@ center = []
 center_num = 20
 center_arg = []
 fea_vec = title_bow_lsa
+    
 for i in range(center_num):
     if i == 0:
         center.append(fea_vec[0])
