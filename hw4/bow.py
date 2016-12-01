@@ -11,7 +11,7 @@ fea = title.bow
 df = np.zeros(shape = len(title.word_set))
 for k, v in title.word_set.iteritems():
     df[title.word_set_id[k]] = title.word_set_total[k]
-index = np.argsort(df)[::-1][:1000]
+index = np.argsort(df)[::-1][:100]
 fea = fea[:, index]
 rank = 0
 for i in index:
@@ -55,7 +55,7 @@ with open('./data/check_index.csv', 'r') as f_in, open('pred.csv', 'w') as f_out
     for idx, pair in enumerate(f_in):
         p = pair.split(',')
         if idx > 0:
-            if Group[int(p[1])] == Group[int(p[2])]:
+            if Group[int(p[1])] == Group[int(p[2])] and Group[int(p[1])] != 0:
                 f_out.write(str(p[0]) + ',' + str(1) + '\n')
             else:
                 f_out.write(str(p[0]) + ',' + str(0) + '\n')

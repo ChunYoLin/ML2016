@@ -36,12 +36,13 @@ tag = np.zeros(shape = 25, dtype = np.int32)
 for c in Group:
     tag[c] += 1
 print tag
+
 with open(sys.argv[1] + 'check_index.csv', 'r') as f_in, open(sys.argv[2], 'w') as f_out:
     f_out.write('ID,Ans\n')
     for idx, pair in enumerate(f_in):
         p = pair.split(',')
         if idx > 0:
-            if Group[int(p[1])] == Group[int(p[2])]:
+            if Group[int(p[1])] == Group[int(p[2])] and Group[int(p[1])] != np.argmax(tag):
                 f_out.write(str(p[0]) + ',' + str(1) + '\n')
             else:
                 f_out.write(str(p[0]) + ',' + str(0) + '\n')

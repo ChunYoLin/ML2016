@@ -50,8 +50,9 @@ class Corpus:
         IDX = 0
         for k, v in word_set_sorted.iteritems():
             IDX += 1
-            if IDX <= 20:
-                ig_word.add(k)
+            if c == 'both':
+                if IDX <= 20:
+                    ig_word.add(k)
             if v < 4:
                 ig_word.add(k)
             if len(k) < 2:
