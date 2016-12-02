@@ -31,8 +31,8 @@ for i in range(len(title.corpus)):
             sent_vec[i] += model[w]
         if norm_len != 0:
             sent_vec[i] /= norm_len
-Group = KMeans(n_clusters = 25, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
-tag = np.zeros(shape = 25, dtype = np.int32)
+Group = KMeans(n_clusters = 21, random_state = 0, max_iter = 1000).fit_predict(sent_vec)
+tag = np.zeros(shape = 21, dtype = np.int32)
 for c in Group:
     tag[c] += 1
 print tag
