@@ -37,24 +37,24 @@ tag = np.zeros(shape = 20, dtype = np.int32)
 for c in Group:
     tag[c] += 1
 print tag
-color = np.zeros(shape = (20000, 1))
-with open('./data/label_StackOverflow.txt') as f:
-    for idx, row in enumerate(f.read().splitlines()):
-        color[idx] = int(row)
+#  color = np.zeros(shape = (20000, 1))
+#  with open('./data/label_StackOverflow.txt') as f:
+    #  for idx, row in enumerate(f.read().splitlines()):
+        #  color[idx] = int(row)
 
-#  with open(sys.argv[1] + 'check_index.csv', 'r') as f_in, open(sys.argv[2], 'w') as f_out:
-    #  f_out.write('ID,Ans\n')
-    #  for idx, pair in enumerate(f_in):
-        #  p = pair.split(',')
-        #  if idx > 0:
-            #  if Group[int(p[1])] == Group[int(p[2])] and Group[int(p[1])] != np.argmax(tag):
-                #  f_out.write(str(p[0]) + ',' + str(1) + '\n')
-            #  else:
-                #  f_out.write(str(p[0]) + ',' + str(0) + '\n')
-reduced_data = TSNE(n_components = 2).fit_transform(sent_vec)
-plt.subplot(121)
-plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
-plt.title("kmeans")
+with open(sys.argv[1] + 'check_index.csv', 'r') as f_in, open(sys.argv[2], 'w') as f_out:
+    f_out.write('ID,Ans\n')
+    for idx, pair in enumerate(f_in):
+        p = pair.split(',')
+        if idx > 0:
+            if Group[int(p[1])] == Group[int(p[2])] and Group[int(p[1])] != np.argmax(tag):
+                f_out.write(str(p[0]) + ',' + str(1) + '\n')
+            else:
+                f_out.write(str(p[0]) + ',' + str(0) + '\n')
+#  reduced_data = TSNE(n_components = 2).fit_transform(sent_vec)
+#  plt.subplot(121)
+#  plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
+#  plt.title("kmeans")
 #  plt.subplot(122)
 #  plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = color * 5, s = 20)
 #  plt.title("true label")
