@@ -1,6 +1,7 @@
 from gensim.models import Word2Vec
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 import numpy as np
 import re
 import matplotlib.pyplot as plt
@@ -46,6 +47,6 @@ with open(sys.argv[1] + 'check_index.csv', 'r') as f_in, open(sys.argv[2], 'w') 
                 f_out.write(str(p[0]) + ',' + str(1) + '\n')
             else:
                 f_out.write(str(p[0]) + ',' + str(0) + '\n')
-#  reduced_data = PCA(n_components = 2).fit_transform(sent_vec)
-#  plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
-#  plt.show()
+reduced_data = TSNE(n_components = 2).fit_transform(sent_vec)
+plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c = Group * 5, s = 20)
+plt.show()

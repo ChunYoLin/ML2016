@@ -45,8 +45,8 @@ class Corpus:
         word_set_sorted = OrderedDict(sorted(self.word_set.items(), key = lambda x: x[1], reverse = True))
         ig_word = set()
         stopwords = nltk.corpus.stopwords.words('english')
-        for w in stopwords:
-            ig_word.add(w)
+        #  for w in stopwords:
+            #  ig_word.add(w)
         IDX = 0
         for k, v in word_set_sorted.iteritems():
             IDX += 1
